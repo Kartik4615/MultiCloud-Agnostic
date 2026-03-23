@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MultiCloud Agnostic Platform — Manage AWS, Azure & GCP from One Interface</title>
+<meta name="description" content="Cloud-agnostic infrastructure management. Deploy and manage AWS, Azure, and GCP from a single, unified interface. Free & Open Source.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --bg2: #0d1117;
+    --bg3: #111620;
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --aws: #FF9900;
+    --azure: #0078D4;
+    --gcp: #4285F4;
+    --gcp-green: #34A853;
+    --gcp-red: #EA4335;
+    --gcp-yellow: #FBBC04;
+    --font-display: 'Times New Roman', Times, serif;
+    --font-body: 'Times New Roman', Times, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --nav-bg: rgba(8,11,18,0.85);
+    --terminal-bg: #0d1117;
+    --terminal-bar: #161b22;
+  }
+
+  body.light {
+    --bg: #f0f4f8;
+    --bg2: #ffffff;
+    --bg3: #f8fafc;
+    --surface: rgba(0,0,0,0.04);
+    --surface-hover: rgba(0,0,0,0.07);
+    --border: rgba(0,0,0,0.09);
+    --border-bright: rgba(0,0,0,0.18);
+    --text: #0f172a;
+    --text-muted: #94a3b8;
+    --text-dim: #475569;
+    --nav-bg: rgba(240,244,248,0.85);
+    --terminal-bg: #1e2433;
+    --terminal-bar: #252d3d;
+  }
+  body.light .mesh::before { background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%); }
+  body.light .mesh::after  { background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%); }
+  body.light .grid-overlay {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  }
+  body.light nav { background: var(--nav-bg); border-bottom-color: var(--border); }
+  body.light .hero-stats { background: rgba(255,255,255,0.8); }
+  body.light .stat-val { background: linear-gradient(135deg,#0f172a,#3b82f6); -webkit-background-clip:text; background-clip:text; }
+  body.light .feature-card { background: #fff; }
+  body.light .feature-card:hover { background: #f8fafc; }
+  body.light .provider-card { background: #fff; }
+  body.light .calc-wrap { background: #fff; }
+  body.light .calc-results { background: var(--bg3); }
+  body.light .form-select { background-color: var(--bg3); color: var(--text); }
+  body.light .terminal-body { background: var(--terminal-bg); color: #e2e8f0; }
+  body.light .ai-section { background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); border-color: rgba(59,130,246,0.2); }
+  body.light .ai-section h2 { color: #0f172a; }
+  body.light .ai-section p { color: #475569; }
+  body.light .ai-feature-item { background: rgba(255,255,255,0.8); border-color: rgba(59,130,246,0.15); }
+  body.light .ai-feature-item p { color: #475569; }
+  body.light .cta-box { background: #fff; }
+
+  /* ─── SMART ESTIMATOR ─── */
+  .smart-estimator {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .smart-est-header {
+    padding: 28px 36px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .smart-est-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .smart-est-sub { font-size: 0.85rem; color: var(--text-muted); }
+  .smart-est-body {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    min-height: 420px;
+  }
+  .smart-controls {
+    padding: 28px 28px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .type-toggle-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .type-toggle {
+    flex: 1;
+    min-width: 70px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .type-toggle.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .type-toggle:hover:not(.active) { background: var(--surface-hover); color: var(--text); }
+
+  .smart-results {
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .smart-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .smart-results-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .smart-results-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(59,130,246,0.12);
+    color: #93c5fd;
+    border: 1px solid rgba(59,130,246,0.2);
+    padding: 2px 10px;
+    border-radius: 100px;
+  }
+  .smart-match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .smart-match-list::-webkit-scrollbar { width: 4px; }
+  .smart-match-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+  .smart-placeholder {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    padding: 40px 20px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+  .smart-inst-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .smart-inst-row:hover { background: var(--surface-hover); border-color: var(--accent); }
+  .smart-inst-row.best-match { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.06); }
+  .smart-inst-pill { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; color: var(--text); min-width: 140px; }
+  .smart-inst-specs { font-size: 0.75rem; color: var(--text-muted); flex: 1; }
+  .smart-inst-price { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: var(--text); text-align: right; white-space: nowrap; }
+  .smart-inst-price small { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+  .smart-inst-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; }
+
+  .smart-best-wrap { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px; }
+  .smart-best-label { font-size: 0.78rem; font-weight: 700; color: #fbbf24; margin-bottom: 10px; }
+  .smart-best-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.08));
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .best-stat { text-align: center; }
+  .best-stat-val { font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: var(--text); }
+  .best-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+  @media (max-width: 900px) {
+    .smart-est-body { grid-template-columns: 1fr; }
+    .smart-controls { border-right: none; border-bottom: 1px solid var(--border); }
+    .smart-best-card { grid-template-columns: 1fr 1fr; }
+  }
+  .db-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .db-filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .db-provider-btn, .db-cat-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .db-provider-btn.active, .db-cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .db-provider-btn.aws-btn.active  { background: #FF9900; border-color: #FF9900; }
+  .db-provider-btn.azure-btn.active { background: #0078D4; border-color: #0078D4; }
+  .db-provider-btn.gcp-btn.active  { background: #4285F4; border-color: #4285F4; }
+  .db-provider-btn:hover:not(.active), .db-cat-btn:hover:not(.active) { background: var(--surface-hover); color: var(--text); }
+  .db-search-wrap { margin-left: auto; }
+  .db-search {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    padding: 9px 16px;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.2s;
+  }
+  .db-search:focus { border-color: var(--accent); }
+
+  .db-table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .db-table thead tr {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .db-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+    transition: color 0.2s;
+  }
+  .db-table th:hover { color: var(--text); }
+  .sort-icon { opacity: 0.4; font-size: 0.7rem; }
+  .db-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .db-table tbody tr:last-child td { border-bottom: none; }
+  .db-table tbody tr:hover td { background: var(--surface); }
+  .db-table tbody tr:hover .inst-name { color: var(--accent); }
+
+  .provider-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+  }
+  .pill-aws   { background: rgba(255,153,0,0.12); color: #FF9900; }
+  .pill-azure { background: rgba(0,120,212,0.12); color: #0078D4; }
+  .pill-gcp   { background: rgba(66,133,244,0.12); color: #4285F4; }
+  .cat-pill {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 5px;
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .cat-gpu { background: rgba(168,85,247,0.1); color: #c084fc; border-color: rgba(168,85,247,0.2); }
+  .cat-compute { background: rgba(59,130,246,0.1); color: #93c5fd; border-color: rgba(59,130,246,0.2); }
+  .cat-memory  { background: rgba(34,197,94,0.08); color: #4ade80; border-color: rgba(34,197,94,0.2); }
+  .inst-name { color: var(--text); font-weight: 600; font-family: var(--font-mono); font-size: 0.82rem; }
+  .price-inr { color: var(--text); font-weight: 600; font-family: var(--font-mono); }
+  .price-mo  { font-size: 0.9rem; }
+  .gpu-tag { color: #c084fc; font-weight: 600; }
+  .no-gpu   { color: var(--text-muted); }
+
+  .db-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg3);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .db-count { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+  .db-note  { font-size: 0.75rem; color: var(--text-muted); }
+
+  @media (max-width: 900px) {
+    .db-table-wrap { overflow-x: auto; }
+    .db-search-wrap { margin-left: 0; width: 100%; }
+    .db-search { width: 100%; }
+  }
+  .theme-toggle {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border-bright);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: var(--surface-hover); border-color: var(--accent); transform: scale(1.05); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── BACKGROUND MESH ─── */
+  .mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .mesh::before {
+    content: '';
+    position: absolute;
+    width: 800px; height: 800px;
+    top: -200px; left: -200px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    animation: drift1 18s ease-in-out infinite alternate;
+  }
+  .mesh::after {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    bottom: -100px; right: -100px;
+    background: radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%);
+    animation: drift2 22s ease-in-out infinite alternate;
+  }
+  .mesh-mid {
+    position: fixed;
+    width: 500px; height: 500px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(255,153,0,0.05) 0%, transparent 70%);
+    animation: drift3 26s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(80px,60px) scale(1.1); } }
+  @keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-60px,-80px) scale(1.15); } }
+  @keyframes drift3 { from { transform: translate(-50%,-50%) scale(1); } to { transform: translate(-50%,-50%) scale(1.2); } }
+
+  /* Grid overlay */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 5%;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(8,11,18,0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.3s;
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .nav-logo .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  .nav-cta {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: white !important;
+    padding: 8px 18px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: opacity 0.2s !important;
+  }
+  .nav-cta:hover { opacity: 0.85; background: none !important; }
+
+  /* ─── SECTIONS ─── */
+  section, .hero-wrap { position: relative; z-index: 1; }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 140px 5% 80px;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    color: #93c5fd;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge .dot {
+    width: 6px; height: 6px;
+    background: #3b82f6;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    max-width: 900px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+  .hero h1 .lavender-text {
+    background: linear-gradient(135deg, #d8b4fe 0%, #c084fc 60%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    max-width: 560px;
+    margin: 0 auto 2.5rem;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+  .hero-ctas {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 13px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 30px rgba(59,130,246,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(59,130,246,0.45);
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 13px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 1px solid var(--border-bright);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn-secondary:hover { background: var(--surface-hover); transform: translateY(-2px); }
+
+  /* Hero stats */
+  .hero-stats {
+    display: flex;
+    gap: 2px;
+    margin-top: 4rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface);
+    backdrop-filter: blur(10px);
+    animation: fadeUp 0.7s 0.4s ease both;
+  }
+  .stat {
+    flex: 1;
+    padding: 20px 32px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-val {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #93c5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTIONS SHARED ─── */
+  .section { padding: 100px 5%; }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    margin-bottom: 1rem;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px; height: 2px;
+    background: #3b82f6;
+    border-radius: 2px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .section-subtitle {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    max-width: 520px;
+  }
+  .section-head { margin-bottom: 3.5rem; }
+
+  /* ─── FEATURES GRID ─── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .feature-card {
+    background: var(--bg2);
+    padding: 36px 32px;
+    transition: background 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .feature-card:hover { background: var(--bg3); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 48px; height: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .feature-card:hover .feature-icon {
+    border-color: rgba(59,130,246,0.4);
+    transform: scale(1.08);
+  }
+  .feature-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .feature-card p { color: var(--text-dim); font-size: 0.93rem; line-height: 1.65; }
+
+  /* ─── PROVIDERS ─── */
+  .providers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .provider-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .provider-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .provider-card.aws::after { background: var(--aws); }
+  .provider-card.azure::after { background: var(--azure); }
+  .provider-card.gcp::after { background: linear-gradient(90deg, var(--gcp-red) 25%, var(--gcp-yellow) 50%, var(--gcp-green) 75%, var(--gcp) 100%); }
+  .provider-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--border-bright);
+  }
+  .provider-card.aws:hover { box-shadow: 0 20px 60px rgba(255,153,0,0.1); }
+  .provider-card.azure:hover { box-shadow: 0 20px 60px rgba(0,120,212,0.1); }
+  .provider-card.gcp:hover { box-shadow: 0 20px 60px rgba(66,133,244,0.1); }
+
+  .provider-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .provider-logo-area { display: flex; align-items: center; gap: 14px; }
+  .provider-logo {
+    width: 56px; height: 56px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px;
+  }
+  .aws .provider-logo { background: rgba(255,153,0,0.12); }
+  .azure .provider-logo { background: rgba(0,120,212,0.12); }
+  .gcp .provider-logo { background: rgba(66,133,244,0.12); }
+  .provider-logo img { width: 30px; height: 30px; object-fit: contain; }
+  .provider-name { font-weight: 700; font-size: 1.05rem; }
+  .provider-short { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .provider-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .badge-live { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+  .badge-cost { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+
+  .provider-services {
+    list-style: none;
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .provider-services li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+  }
+  .provider-services li .check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .aws .check { background: rgba(255,153,0,0.15); color: var(--aws); }
+  .azure .check { background: rgba(0,120,212,0.15); color: var(--azure); }
+  .gcp .check { background: rgba(66,133,244,0.15); color: var(--gcp); }
+
+  .provider-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .price-from { font-size: 0.78rem; color: var(--text-muted); }
+  .price-val {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .aws .price-val { color: var(--aws); }
+  .azure .price-val { color: var(--azure); }
+  .gcp .price-val { color: var(--gcp); }
+  .price-period { font-size: 0.82rem; color: var(--text-muted); }
+
+  /* ─── CALCULATOR ─── */
+  .calc-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .calc-inputs { padding: 40px; border-right: 1px solid var(--border); }
+  .calc-results { padding: 40px; background: var(--bg3); }
+  .form-group { margin-bottom: 24px; }
+  .form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .form-select, .form-range {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  .form-select:focus, .form-range:focus { border-color: var(--accent); }
+  .form-range {
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    accent-color: var(--accent);
+    height: 20px;
+    border-radius: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+  }
+  .form-range::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--val, 0%), rgba(255,255,255,0.12) var(--val, 0%), rgba(255,255,255,0.12) 100%);
+    border-radius: 4px;
+  }
+  .form-range::-moz-range-track {
+    height: 4px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+  }
+  .form-range::-moz-range-progress {
+    height: 4px;
+    background: var(--accent);
+    border-radius: 4px;
+  }
+  .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 8px rgba(59,130,246,0.5);
+    cursor: pointer;
+    margin-top: -7px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 14px rgba(59,130,246,0.7);
+  }
+  .form-range::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 8px rgba(59,130,246,0.5);
+    cursor: pointer;
+  }
+  .range-row { display: flex; align-items: center; gap: 16px; }
+  .range-val {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: #93c5fd;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .result-instance {
+    display: inline-block;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: #93c5fd;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 28px;
+  }
+  .cost-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-label { color: var(--text-dim); font-size: 0.88rem; }
+  .cost-val {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .cost-val.highlight {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #fff, #93c5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: var(--font-display);
+  }
+
+  /* ─── TERMINAL ─── */
+  .terminal-wrap {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .terminal {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+  }
+  .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .t-red { background: #ff5f57; }
+  .t-yellow { background: #febc2e; }
+  .t-green { background: #28c840; }
+  .t-title {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .terminal-body { padding: 28px; font-family: var(--font-mono); font-size: 0.88rem; line-height: 1.8; }
+  .t-prompt { color: #4ade80; }
+  .t-cmd { color: var(--text); }
+  .t-comment { color: #6b7280; }
+  .t-key { color: #93c5fd; }
+  .t-val { color: #fbbf24; }
+  .t-success { color: #4ade80; }
+  .t-info { color: #c084fc; }
+  .t-line { display: block; margin: 2px 0; }
+
+  .terminal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .t-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    padding: 7px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .t-tab.active, .t-tab:hover {
+    background: rgba(59,130,246,0.15);
+    border-color: rgba(59,130,246,0.35);
+    color: #93c5fd;
+  }
+
+  /* ─── CTA SECTION ─── */
+  .cta-section {
+    padding: 100px 5%;
+    text-align: center;
+  }
+  .cta-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 80px 40px;
+    position: relative;
+    overflow: hidden;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-box h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .cta-box p { color: var(--text-dim); font-size: 1.05rem; margin-bottom: 2.5rem; }
+  .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 60px 5% 40px;
+    position: relative;
+    z-index: 1;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+  .footer-brand .nav-logo { margin-bottom: 14px; display: inline-flex; }
+  .footer-brand p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.7; max-width: 260px; }
+  .footer-col h4 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.88rem;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--text); }
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-bottom p { color: var(--text-muted); font-size: 0.82rem; }
+
+  /* ─── DIVIDERS ─── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 5%;
+  }
+
+  /* ─── SCROLL REVEAL ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .calc-wrap { grid-template-columns: 1fr; }
+    .calc-inputs { border-right: none; border-bottom: 1px solid var(--border); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    nav .nav-links { display: none; }
+  }
+  @media (max-width: 600px) {
+    .hero-stats { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat:last-child { border-bottom: none; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+  }
+  /* ─── AI RECOMMENDER SECTION ─── */
+  .ai-section {
+    margin: 0 5%;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #0d1b3e 0%, #0f172a 50%, #1a0533 100%);
+    border: 1px solid rgba(99,102,241,0.25);
+    padding: 80px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .ai-section::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .ai-section::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(168,85,247,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 100px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  .ai-section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+  .ai-section h2 span {
+    background: linear-gradient(135deg, #a5b4fc, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .ai-section > div > p {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+  .ai-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-ai {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 13px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 30px rgba(99,102,241,0.35);
+  }
+  .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(99,102,241,0.5); }
+  .ai-features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .ai-feature-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(99,102,241,0.15);
+    border-radius: 14px;
+    padding: 20px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .ai-feature-item:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(99,102,241,0.3);
+  }
+  .ai-feature-icon { font-size: 1.5rem; margin-bottom: 10px; }
+  .ai-feature-item h4 { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+  .ai-feature-item p { font-size: 0.8rem; color: #64748b; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    .ai-section { grid-template-columns: 1fr; padding: 48px 32px; }
+    .ai-features-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    .ai-section { margin: 0 3%; padding: 40px 24px; }
+    .ai-features-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ─── INTERACTIVE TERMINAL ─── */
+  .iterm {
+    background: var(--terminal-bg, #0d1117);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .iterm-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    background: var(--terminal-bar, #161b22);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+  .iterm-title { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
+  .iterm-output {
+    padding: 24px 28px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    min-height: 260px;
+    max-height: 340px;
+    overflow-y: auto;
+    color: #e2e8f0;
+  }
+  .iterm-output::-webkit-scrollbar { width: 4px; }
+  .iterm-output::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+  .iterm-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .iterm-prompt-label { color: #4ade80; font-family: var(--font-mono); font-size: 0.85rem; white-space: nowrap; }
+  .iterm-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    caret-color: #4ade80;
+  }
+  .iterm-input::placeholder { color: #374151; }
+  .iterm-send {
+    background: rgba(74,222,128,0.12);
+    border: 1px solid rgba(74,222,128,0.25);
+    color: #4ade80;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 5px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .iterm-send:hover { background: rgba(74,222,128,0.2); }
+  .it-prompt { color: #4ade80; }
+  .it-cmd { color: #f8fafc; }
+  .it-info { color: #818cf8; }
+  .it-key { color: #93c5fd; }
+  .it-val { color: #fbbf24; }
+  .it-success { color: #4ade80; }
+  .it-error { color: #f87171; }
+  .it-dim { color: #4b5563; }
+  .it-line { display: block; }
+
+  .iterm-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 14px;
+    font-family: var(--font-mono);
+  }
+  .iterm-hint span {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 5px;
+    margin: 0 2px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .iterm-hint span:hover { background: var(--surface-hover); color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="mesh"></div>
+<div class="mesh-mid"></div>
+<div class="grid-overlay"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="logo-icon">☁️</span>
+    MultiCloud Agnostic Platform
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#providers">Providers</a></li>
+    <li><a href="#calculator">Pricing</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#ai-recommender">🤖 AI</a></li>
+    <li><a href="recommender.html" class="nav-cta">Try Recommender</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" id="themeBtn">🌙</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Open Source · Free Forever</div>
+  <h1><span class="gradient-text">One Platform.</span><br><span class="lavender-text">3 Major Clouds.</span></h1>
+  <p>Manage AWS, Azure, and GCP infrastructure from a single, unified interface. No vendor lock-in. No complexity.</p>
+  <div class="hero-ctas">
+    <a href="#demo" class="btn-primary">▶ Try Live Demo</a>
+    <a href="https://github.com/Kartik4615/multicloud-platform-2" class="btn-secondary" target="_blank">⭐ Star on GitHub</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-val">3</div><div class="stat-label">Cloud Providers</div></div>
+    <div class="stat"><div class="stat-val">$0</div><div class="stat-label">Platform Cost</div></div>
+    <div class="stat"><div class="stat-val">100%</div><div class="stat-label">Open Source</div></div>
+    <div class="stat"><div class="stat-val">∞</div><div class="stat-label">Scalability</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-head reveal">
+    <div class="section-label">Why MultiCloud</div>
+    <h2 class="section-title">Everything you need,<br>nothing you don't.</h2>
+    <p class="section-subtitle">A focused set of tools to manage cloud infrastructure without the enterprise bloat.</p>
+  </div>
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Cloud Agnostic</h3>
+      <p>One unified interface for AWS, Azure, and GCP. Stop context-switching between three different dashboards.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <h3>Cost Estimation</h3>
+      <p>See exact costs before creating any resource. Prevent surprise bills and stay on budget every month.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">👁️</div>
+      <h3>Preview Mode</h3>
+      <p>Dry-run your infrastructure changes before committing. Test without touching real resources.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Lightning Fast</h3>
+      <p>Deploy VMs in seconds with an optimized Terraform backend. Speed is a feature, not an afterthought.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Secure by Default</h3>
+      <p>Your credentials stay local. We never store your cloud access keys — not even temporarily.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🚀</div>
+      <h3>Developer Friendly</h3>
+      <p>Simple CLI, clean API, and extensive docs for easy integration into your existing workflows.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROVIDERS -->
+<section class="section" id="providers">
+  <div class="section-head reveal">
+    <div class="section-label">Cloud Providers</div>
+    <h2 class="section-title">Supported platforms</h2>
+    <p class="section-subtitle">Deploy seamlessly across the world's leading cloud platforms.</p>
+  </div>
+  <div class="providers-grid">
+    <div class="provider-card aws reveal">
+      <div class="provider-header">
+        <div class="provider-logo-area">
+          <div class="provider-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 48" width="40" height="24">
+              <path d="M22.8 19.2c0 .8.1 1.5.2 2 .2.5.4 1 .7 1.6.1.2.2.4.2.6 0 .3-.2.5-.5.7l-1.6 1.1c-.2.1-.4.2-.6.2-.2 0-.5-.1-.7-.3-.3-.4-.6-.8-.8-1.2-.2-.4-.4-.9-.7-1.5-1.7 2-3.9 3-6.4 3-1.8 0-3.3-.5-4.3-1.6-1-.9-1.6-2.3-1.6-3.9 0-1.7.6-3.1 1.9-4.2 1.3-1 2.9-1.6 5-1.6.7 0 1.4.1 2.1.2.8.1 1.5.3 2.3.5v-1.5c0-1.5-.3-2.6-1-3.2-.6-.6-1.7-.9-3.2-.9-.7 0-1.4.1-2.1.3-.8.2-1.5.4-2.2.7-.3.1-.6.2-.7.3-.1 0-.3.1-.4.1-.3 0-.5-.2-.5-.7v-1.1c0-.4.1-.6.2-.8.2-.2.5-.4.9-.5.7-.4 1.5-.6 2.5-.9 1-.2 2-.3 3.1-.3 2.4 0 4.1.5 5.2 1.6 1.1 1.1 1.6 2.7 1.6 4.9zm-8.9 3.3c.7 0 1.3-.1 2-.4.7-.3 1.3-.7 1.8-1.3.3-.4.5-.8.6-1.3.1-.5.2-1 .2-1.7v-.8c-.6-.1-1.2-.3-1.9-.3-.7-.1-1.3-.1-1.9-.1-1.4 0-2.4.3-3 .8-.7.5-1 1.3-1 2.2 0 .9.2 1.6.7 2 .5.7 1.4.9 2.5.9zm16.2 2.2c-.4 0-.7-.1-.9-.2-.2-.2-.4-.5-.5-1l-5.7-18.8c-.1-.5-.2-.8-.2-1 0-.4.2-.6.6-.6h2.3c.4 0 .7.1.9.2.2.2.4.5.5.9l4.1 16.1 3.8-16.1c.1-.5.2-.8.5-.9.2-.2.5-.2 1-.2h1.9c.4 0 .7.1 1 .2.2.2.4.5.5.9l3.8 16.3 4.2-16.3c.1-.5.3-.8.5-.9.2-.2.5-.2.9-.2h2.2c.4 0 .6.2.6.6 0 .1 0 .3-.1.5 0 .2-.1.4-.2.6l-5.8 18.8c-.1.5-.3.8-.5 1-.2.2-.5.2-.9.2h-2c-.4 0-.7-.1-1-.2-.2-.2-.4-.5-.5-1L36 8.2l-3.7 16.3c-.1.5-.3.8-.5 1-.2.2-.5.2-1 .2zm31 .7c-1.3 0-2.5-.1-3.7-.4-1.2-.3-2.1-.6-2.7-1-.4-.2-.6-.5-.7-.7-.1-.2-.1-.4-.1-.6v-1.2c0-.5.2-.7.5-.7.1 0 .3 0 .4.1.1.1.3.1.5.2.7.3 1.5.5 2.3.7.9.2 1.7.3 2.5.3 1.3 0 2.3-.2 3-.7.7-.5 1.1-1.1 1.1-1.9 0-.6-.2-1-.6-1.4-.4-.4-1.2-.7-2.2-1l-3.2-.9c-1.6-.5-2.8-1.2-3.5-2.2-.7-1-.1-2-1.1-3.3 0-.9.2-1.7.7-2.4.4-.7 1-1.3 1.7-1.8.7-.5 1.5-.8 2.4-1.1.9-.2 1.8-.3 2.8-.3.5 0 1 0 1.5.1.5.1 1 .2 1.4.3.4.1.8.2 1.2.4.4.1.7.3.9.4.3.2.5.3.6.5.1.2.2.4.2.7v1.1c0 .5-.2.7-.5.7-.2 0-.5-.1-.9-.3-.6-.3-1.3-.5-2-.7-.7-.2-1.4-.3-2.1-.3-1.2 0-2.1.2-2.7.6-.6.4-.9 1-.9 1.8 0 .6.2 1 .6 1.4.4.4 1.2.7 2.4 1.1l3.1.9c1.6.5 2.7 1.2 3.4 2.1.7 1 1 2 1 3.2 0 1-.2 1.9-.6 2.6-.4.8-1 1.4-1.7 2-.7.5-1.5 1-2.5 1.3-1.1.3-2.2.4-3.4.4z" fill="#FF9900"/>
+              <path d="M58.7 35.8C51.9 40.9 42 43.6 33.4 43.6c-12.1 0-23-4.5-31.3-12-0.6-.6-.1-1.4.7-1 9 5.3 20.1 8.5 31.6 8.5 7.7 0 16.2-1.6 24-4.9 1.2-.4 2.1.8 1 1.6z" fill="#FF9900"/>
+              <path d="M61.7 32.4c-.9-1.1-5.7-.5-7.9-.3-.7.1-.8-.5-.2-.9 3.9-2.7 10.2-1.9 10.9-1 .7.9-.2 7.2-3.8 10.2-.6.5-1.1.2-.9-.4.8-2 2.7-6.5 1.9-7.6z" fill="#FF9900"/>
+            </svg>
+          </div>
+          <div>
+            <div class="provider-name">Amazon Web Services</div>
+            <div class="provider-short">aws.amazon.com</div>
+          </div>
+        </div>
+        <span class="provider-badge badge-live">✓ Live</span>
+      </div>
+      <ul class="provider-services">
+        <li><span class="check">✓</span> EC2 Instances (t3.micro – t3.xlarge)</li>
+        <li><span class="check">✓</span> VPC &amp; Networking</li>
+        <li><span class="check">✓</span> Security Groups</li>
+        <li><span class="check">✓</span> 9 Global Regions</li>
+        <li><span class="check">✓</span> Auto AMI Selection</li>
+      </ul>
+      <div class="provider-price">
+        <span class="price-from">From</span>
+        <span class="price-val">₹630</span>
+        <span class="price-period">/month</span>
+      </div>
+    </div>
+    <div class="provider-card azure reveal">
+      <div class="provider-header">
+        <div class="provider-logo-area">
+          <div class="provider-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59.438 47.5" width="36" height="28">
+              <path d="M33.055 0L19.57 12.085 5.037 37.244H16.56zm2.322 2.886l-7.976 22.497 15.232 19.13-29.657.987H59.44z" fill="#0078D4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="provider-name">Microsoft Azure</div>
+            <div class="provider-short">azure.microsoft.com</div>
+          </div>
+        </div>
+        <span class="provider-badge badge-cost">Cost Est.</span>
+      </div>
+      <ul class="provider-services">
+        <li><span class="check">✓</span> Virtual Machines (B-series)</li>
+        <li><span class="check">✓</span> Virtual Networks</li>
+        <li><span class="check">✓</span> Network Security Groups</li>
+        <li><span class="check">✓</span> Resource Groups</li>
+        <li><span class="check">✓</span> Multiple Regions</li>
+      </ul>
+      <div class="provider-price">
+        <span class="price-from">From</span>
+        <span class="price-val">₹714</span>
+        <span class="price-period">/month</span>
+      </div>
+    </div>
+    <div class="provider-card gcp reveal">
+      <div class="provider-header">
+        <div class="provider-logo-area">
+          <div class="provider-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30" height="30">
+              <path d="M263 114l25-25A143 143 0 0 0 143 137l25 25a109 109 0 0 1 95-48z" fill="#EA4335"/>
+              <path d="M369 137l25-25A215 215 0 0 0 41 262h36a179 179 0 0 1 292-125z" fill="#EA4335"/>
+              <path d="M143 387l-25 25a215 215 0 0 0 353-150h-36a179 179 0 0 1-292 125z" fill="#34A853"/>
+              <path d="M435 262h36a215 215 0 0 0-96-179l-25 25a179 179 0 0 1 85 154z" fill="#4285F4"/>
+              <path d="M369 387a143 143 0 0 1-106 48 143 143 0 0 1-100-41l-25 25a179 179 0 0 0 231 0z" fill="#34A853"/>
+              <path d="M256 149a113 113 0 0 0-113 113h36a77 77 0 0 1 77-77z" fill="#FBBC04"/>
+              <path d="M369 262a113 113 0 0 1-113 113v36a149 149 0 0 0 149-149z" fill="#4285F4"/>
+              <circle cx="256" cy="262" r="41" fill="#1A73E8"/>
+            </svg>
+          </div>
+          <div>
+            <div class="provider-name">Google Cloud Platform</div>
+            <div class="provider-short">cloud.google.com</div>
+          </div>
+        </div>
+        <span class="provider-badge badge-cost">Cost Est.</span>
+      </div>
+      <ul class="provider-services">
+        <li><span class="check">✓</span> Compute Engine (e2 series)</li>
+        <li><span class="check">✓</span> VPC Networks</li>
+        <li><span class="check">✓</span> Firewall Rules</li>
+        <li><span class="check">✓</span> Global Load Balancing</li>
+        <li><span class="check">✓</span> Multi-Region Support</li>
+      </ul>
+      <div class="provider-price">
+        <span class="price-from">From</span>
+        <span class="price-val">₹588</span>
+        <span class="price-period">/month</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CALCULATOR -->
+<section class="section" id="calculator">
+  <div class="section-head reveal">
+    <div class="section-label">Cost Calculator & Instance Browser</div>
+    <h2 class="section-title">Know before you deploy</h2>
+    <p class="section-subtitle">Browse real instance specs and pricing across AWS, Azure, and GCP — filtered by your needs.</p>
+  </div>
+
+  <!-- Provider + Category Filters -->
+  <div class="db-filters reveal">
+    <div class="db-filter-group">
+      <button class="db-provider-btn active" data-provider="all" onclick="filterDB('provider','all',this)">All Clouds</button>
+      <button class="db-provider-btn aws-btn" data-provider="aws" onclick="filterDB('provider','aws',this)">AWS</button>
+      <button class="db-provider-btn azure-btn" data-provider="azure" onclick="filterDB('provider','azure',this)">Azure</button>
+      <button class="db-provider-btn gcp-btn" data-provider="gcp" onclick="filterDB('provider','gcp',this)">GCP</button>
+    </div>
+    <div class="db-filter-group">
+      <button class="db-cat-btn active" data-cat="all" onclick="filterDB('cat','all',this)">All Types</button>
+      <button class="db-cat-btn" data-cat="general" onclick="filterDB('cat','general',this)">General Purpose</button>
+      <button class="db-cat-btn" data-cat="compute" onclick="filterDB('cat','compute',this)">Compute Optimized</button>
+      <button class="db-cat-btn" data-cat="memory" onclick="filterDB('cat','memory',this)">Memory Optimized</button>
+      <button class="db-cat-btn" data-cat="gpu" onclick="filterDB('cat','gpu',this)">GPU</button>
+    </div>
+    <div class="db-search-wrap">
+      <input class="db-search" id="dbSearch" type="text" placeholder="🔍 Search instance..." oninput="renderDB()">
+    </div>
+  </div>
+
+  <!-- Instance Table -->
+  <div class="db-table-wrap reveal">
+    <table class="db-table">
+      <thead>
+        <tr>
+          <th onclick="sortDB('provider')">Provider <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('name')">Instance <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('category')">Category <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('cpu')">vCPU <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('ram')">RAM (GB) <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('gpu')">GPU <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('gpuMem')">GPU Mem <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('priceHr')">₹/hr <span class="sort-icon">↕</span></th>
+          <th onclick="sortDB('priceMo')">₹/mo <span class="sort-icon">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="dbTableBody"></tbody>
+    </table>
+    <div class="db-footer-row">
+      <span id="dbCount" class="db-count">— instances</span>
+      <span class="db-note">* Prices converted at 1 USD = ₹84. On-demand pricing, may vary by region.</span>
+    </div>
+  </div>
+
+  <!-- Smart Estimator -->
+  <div class="smart-estimator reveal" style="margin-top:48px;">
+    <div class="smart-est-header">
+      <h3 class="smart-est-title">⚡ Smart Instance Finder</h3>
+      <p class="smart-est-sub">Slide to your needs — matching instances update live.</p>
+    </div>
+
+    <div class="smart-est-body">
+      <!-- Left: Controls -->
+      <div class="smart-controls">
+        <div class="form-group">
+          <label class="form-label">Cloud Provider</label>
+          <select class="form-select" id="calcProvider" onchange="smartUpdate()">
+            <option value="all">All Providers</option>
+            <option value="aws">Amazon Web Services (AWS)</option>
+            <option value="azure">Microsoft Azure</option>
+            <option value="gcp">Google Cloud Platform (GCP)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Instance Type</label>
+          <div class="type-toggle-group">
+            <button class="type-toggle active" data-type="general" onclick="setInstType('general',this)">General</button>
+            <button class="type-toggle" data-type="compute" onclick="setInstType('compute',this)">Compute</button>
+            <button class="type-toggle" data-type="memory" onclick="setInstType('memory',this)">Memory</button>
+            <button class="type-toggle" data-type="gpu" onclick="setInstType('gpu',this)">🖥 GPU</button>
+          </div>
+        </div>
+
+        <div id="cpuRamControls">
+          <div class="form-group">
+            <label class="form-label">vCPU Cores — <span id="cpuVal">2</span></label>
+            <div class="range-row">
+              <input type="range" class="form-range" id="cpuSlider" min="1" max="128" value="2" oninput="document.getElementById('cpuVal').textContent=this.value;document.getElementById('cpuValR').textContent=this.value;updateSliderFill(this);smartUpdate()">
+              <span class="range-val" id="cpuValR">2</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">RAM (GB) — <span id="ramVal">4</span></label>
+            <div class="range-row">
+              <input type="range" class="form-range" id="ramSlider" min="1" max="512" value="4" oninput="document.getElementById('ramVal').textContent=this.value;document.getElementById('ramValR').textContent=this.value;updateSliderFill(this);smartUpdate()">
+              <span class="range-val" id="ramValR">4</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="gpuControls" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">GPU Count — <span id="gpuCountVal">1</span></label>
+            <div class="range-row">
+              <input type="range" class="form-range" id="gpuCountSlider" min="1" max="16" value="1" oninput="document.getElementById('gpuCountVal').textContent=this.value;updateSliderFill(this);smartUpdate()">
+              <span class="range-val" id="gpuCountValR">1</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPU Memory (GB) — <span id="gpuMemVal">16</span></label>
+            <div class="range-row">
+              <input type="range" class="form-range" id="gpuMemSlider" min="8" max="640" step="8" value="16" oninput="document.getElementById('gpuMemVal').textContent=this.value;updateSliderFill(this);smartUpdate()">
+              <span class="range-val" id="gpuMemValR">16</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPU Model</label>
+            <select class="form-select" id="gpuModelFilter" onchange="smartUpdate()">
+              <option value="all">Any GPU</option>
+              <option value="T4">NVIDIA T4</option>
+              <option value="A10G">NVIDIA A10G</option>
+              <option value="V100">NVIDIA V100</option>
+              <option value="A100">NVIDIA A100</option>
+              <option value="L4">NVIDIA L4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Region</label>
+          <select class="form-select" id="calcRegion" onchange="smartUpdate()">
+            <option value="us-east">US East (N. Virginia)</option>
+            <option value="us-west">US West (Oregon)</option>
+            <option value="eu">EU (Ireland)</option>
+            <option value="ap">Asia Pacific (Mumbai)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: Live Results -->
+      <div class="smart-results">
+        <div class="smart-results-header">
+          <span class="smart-results-label" id="smartMatchLabel">Matching instances</span>
+          <span class="smart-results-count" id="smartMatchCount">—</span>
+        </div>
+        <div class="smart-match-list" id="smartMatchList">
+          <div class="smart-placeholder">← Adjust sliders to find matching instances</div>
+        </div>
+        <div class="smart-best-wrap" id="smartBestWrap" style="display:none;">
+          <div class="smart-best-label">💡 Best Match</div>
+          <div class="smart-best-card" id="smartBestCard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TERMINAL DEMO -->
+<section class="section" id="demo">
+  <div class="section-head reveal" style="text-align:center; align-items:center; display:flex; flex-direction:column;">
+    <div class="section-label">Live Demo</div>
+    <h2 class="section-title">Type real commands</h2>
+    <p class="section-subtitle">An interactive terminal — try actual CLI commands below.</p>
+  </div>
+  <div class="reveal">
+    <div class="iterm">
+      <div class="iterm-bar">
+        <span class="t-dot t-red"></span>
+        <span class="t-dot t-yellow"></span>
+        <span class="t-dot t-green"></span>
+        <span class="iterm-title">multicloud-platform — interactive shell</span>
+      </div>
+      <div class="iterm-output" id="itermOutput">
+        <span class="it-line"><span class="it-info">MultiCloud Platform CLI v1.0.0</span></span>
+        <span class="it-line"><span class="it-dim">Type a command below or click a suggestion. Try: help</span></span>
+        <span class="it-line"></span>
+      </div>
+      <div class="iterm-input-row">
+        <span class="iterm-prompt-label">➜</span>
+        <input class="iterm-input" id="itermInput" type="text" placeholder="Type a command..." autocomplete="off" spellcheck="false" />
+        <button class="iterm-send" onclick="runTermCmd()">Enter ↵</button>
+      </div>
+    </div>
+    <p class="iterm-hint">
+      Quick commands:
+      <span onclick="injectCmd('help')">help</span>
+      <span onclick="injectCmd('estimate --provider aws --cpu 2 --ram 4')">estimate</span>
+      <span onclick="injectCmd('preview --provider azure --region eu')">preview</span>
+      <span onclick="injectCmd('regions --provider gcp')">regions</span>
+      <span onclick="injectCmd('clear')">clear</span>
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- AI RECOMMENDER -->
+<section class="section" id="ai-recommender" style="padding-top:0;padding-bottom:0;">
+  <div class="ai-section reveal">
+    <div>
+      <div class="ai-badge">✨ AI-Powered</div>
+      <h2>Not sure which<br>cloud to pick?<br><span>Let AI decide.</span></h2>
+      <p>Our AI Recommender analyses your workload, budget, and region preferences — then recommends the best cloud provider and instance type for your exact use case.</p>
+      <div class="ai-ctas">
+        <a href="recommender.html" class="btn-ai">🤖 Try AI Recommender →</a>
+        <a href="#features" class="btn-secondary">Learn More</a>
+      </div>
+    </div>
+    <div class="ai-features-grid">
+      <div class="ai-feature-item">
+        <div class="ai-feature-icon">🧠</div>
+        <h4>Smart Analysis</h4>
+        <p>Analyses CPU, RAM, region, and budget to find the best fit.</p>
+      </div>
+      <div class="ai-feature-item">
+        <div class="ai-feature-icon">💸</div>
+        <h4>Cost Optimised</h4>
+        <p>Recommends cheapest instance that meets your requirements.</p>
+      </div>
+      <div class="ai-feature-item">
+        <div class="ai-feature-icon">⚡</div>
+        <h4>Instant Results</h4>
+        <p>Get a provider recommendation in under 2 seconds.</p>
+      </div>
+      <div class="ai-feature-item">
+        <div class="ai-feature-icon">🌍</div>
+        <h4>Region Aware</h4>
+        <p>Factors in latency and regional pricing differences.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box reveal">
+    <h2>Ready to simplify<br><span style="background:linear-gradient(135deg,#fff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">your cloud?</span></h2>
+    <p>Join developers who are already managing multi-cloud infrastructure with ease.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/Kartik4615/multicloud-platform-2" target="_blank" class="btn-primary">⭐ View on GitHub</a>
+      <a href="/cdn-cgi/l/email-protection#e883899a9c818385898089859d8681d8d9d9d9a88f85898184c68b8785" class="btn-secondary">✉ Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">
+        <span class="logo-icon">☁️</span>
+        MultiCloud Agnostic Platform
+      </a>
+      <p>Cloud-agnostic infrastructure management made simple. Built with ❤️ by Kartik Mahamuni.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#providers">Providers</a></li>
+        <li><a href="#calculator">Pricing</a></li>
+        <li><a href="#demo">Demo</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="https://github.com/Kartik4615/multicloud-platform-2" target="_blank">Documentation</a></li>
+        <li><a href="https://github.com/Kartik4615/multicloud-platform-2" target="_blank">GitHub</a></li>
+        <li><a href="#">Quick Start</a></li>
+        <li><a href="#">API Reference</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <ul>
+        <li><a href="/cdn-cgi/l/email-protection#650e0417110c0e08040d0408100b0c55545454250208040c094b060a08">Email</a></li>
+        <li><a href="https://www.linkedin.com/in/kartik-mahamuni-43528a219/" target="_blank">LinkedIn</a></li>
+        <li><a href="https://github.com/Kartik4615" target="_blank">GitHub</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 MultiCloud Agnostic Platform. All rights reserved.</p>
+    <p style="color:var(--text-muted);font-size:0.8rem;">Built with ❤️ by Kartik Mahamuni</p>
+  </div>
+</footer>
+
+<script>
+  // ─── Scroll reveal ───
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ─── Range sliders ───
+  function updateSliderFill(slider) {
+    const min = slider.min || 0, max = slider.max || 100, val = slider.value;
+    const pct = ((val - min) / (max - min)) * 100;
+    slider.style.setProperty('--val', pct + '%');
+  }
+  document.getElementById('cpuSlider').addEventListener('input', function() {
+    document.getElementById('cpuVal').textContent = this.value;
+    document.getElementById('cpuValR').textContent = this.value;
+    updateSliderFill(this);
+  });
+  document.getElementById('ramSlider').addEventListener('input', function() {
+    document.getElementById('ramVal').textContent = this.value;
+    document.getElementById('ramValR').textContent = this.value;
+    updateSliderFill(this);
+  });
+  // Init fill on load
+  updateSliderFill(document.getElementById('cpuSlider'));
+  updateSliderFill(document.getElementById('ramSlider'));
+
+  // ─── Cost calculator ───
+  const USD_TO_INR = 84;
+  const baseRates = {
+    aws:   { hourly: 0.0104 * USD_TO_INR, multiplier: 1.0, name: 't3' },
+    azure: { hourly: 0.0116 * USD_TO_INR, multiplier: 1.05, name: 'B' },
+    gcp:   { hourly: 0.0095 * USD_TO_INR, multiplier: 0.98, name: 'e2' },
+  };
+  const regionMulti = { 'us-east':1.0, 'us-west':1.02, 'eu':1.08, 'ap':1.05 };
+  const instanceSizes = ['nano','micro','small','medium','large','xlarge','2xlarge','4xlarge'];
+
+  function calcCost() {
+    const provider = document.getElementById('calcProvider').value;
+    const cpu = parseInt(document.getElementById('cpuSlider').value);
+    const ram = parseInt(document.getElementById('ramSlider').value);
+    const region = document.getElementById('calcRegion').value;
+    const rate = baseRates[provider];
+    const rMult = regionMulti[region];
+    const hourly = rate.hourly * cpu * (1 + ram / 16) * rMult * rate.multiplier;
+    const daily = hourly * 24, monthly = daily * 30, yearly = monthly * 12;
+    const sizeIdx = Math.min(Math.floor(cpu / 2 + ram / 8), instanceSizes.length - 1);
+    document.getElementById('instanceType').textContent = `${rate.name}-${instanceSizes[sizeIdx]}`;
+    document.getElementById('costHourly').textContent = `₹${hourly.toFixed(2)}`;
+    document.getElementById('costDaily').textContent = `₹${daily.toFixed(2)}`;
+    document.getElementById('costMonthly').textContent = `₹${monthly.toFixed(0)}`;
+    document.getElementById('costYearly').textContent = `₹${yearly.toFixed(0)}`;
+  }
+
+  // ─── Dark / Light mode ───
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('light');
+    document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  }
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+
+  // ─── Interactive Terminal ───
+  const itermOutput = document.getElementById('itermOutput');
+  const itermInput  = document.getElementById('itermInput');
+  let cmdHistory = [], histIdx = -1;
+
+  function escHTML(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function parseArg(args, key) { const m = args.match(new RegExp('--' + key + '\\s+([\\w.-]+)')); return m ? m[1] : null; }
+
+  const termResponses = {
+    help: () => `<span class="it-line"></span>
+<span class="it-line"><span class="it-info">MultiCloud Platform CLI v1.0.0</span></span>
+<span class="it-line"><span class="it-dim">Cloud-agnostic infrastructure management</span></span>
+<span class="it-line"></span>
+<span class="it-line"><span class="it-key">Usage:</span>  <span class="it-val">[command] [--option value]</span></span>
+<span class="it-line"></span>
+<span class="it-line"><span class="it-key">Commands:</span></span>
+<span class="it-line">  <span class="it-success">estimate</span>   --provider [aws|azure|gcp] --cpu [n] --ram [n]</span>
+<span class="it-line">  <span class="it-success">preview</span>    --provider [aws|azure|gcp] --region [id]</span>
+<span class="it-line">  <span class="it-success">regions</span>    --provider [aws|azure|gcp]</span>
+<span class="it-line">  <span class="it-success">deploy</span>     --provider [aws|azure|gcp] --region [id]</span>
+<span class="it-line">  <span class="it-success">status</span>     Show platform status</span>
+<span class="it-line">  <span class="it-success">clear</span>      Clear the terminal</span>
+<span class="it-line"></span>`,
+
+    estimate: function(args) {
+      const p = parseArg(args,'provider') || 'aws';
+      const cpu = parseInt(parseArg(args,'cpu')) || 2;
+      const ram = parseInt(parseArg(args,'ram')) || 4;
+      const pMap = { aws:{name:'t3.small',base:0.0208}, azure:{name:'B2s',base:0.0232}, gcp:{name:'e2-small',base:0.0188} };
+      if (!pMap[p]) return '<span class="it-line"><span class="it-error">✗  Unknown provider. Use: aws, azure, gcp</span></span><span class="it-line"></span>';
+      const pr = pMap[p];
+      const hourly = pr.base * (cpu/2) * (1+ram/16) * USD_TO_INR;
+      return '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-info">☁  Fetching ' + p.toUpperCase() + ' pricing...</span></span>' +
+        '<span class="it-line"><span class="it-success">✓  Connected</span></span>' +
+        '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-key">Instance:</span>  <span class="it-val">' + pr.name + ' (' + cpu + ' vCPU, ' + ram + ' GB RAM)</span></span>' +
+        '<span class="it-line"><span class="it-key">Hourly:  </span>  <span class="it-val">₹' + hourly.toFixed(2) + '</span></span>' +
+        '<span class="it-line"><span class="it-key">Daily:   </span>  <span class="it-val">₹' + (hourly*24).toFixed(2) + '</span></span>' +
+        '<span class="it-line"><span class="it-key">Monthly: </span>  <span class="it-val">₹' + (hourly*24*30).toFixed(0) + '</span></span>' +
+        '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-success">✓  Estimation complete. No resources created.</span></span>' +
+        '<span class="it-line"></span>';
+    },
+
+    preview: function(args) {
+      const p = parseArg(args,'provider') || 'aws';
+      const r = parseArg(args,'region') || 'us-east-1';
+      const resMap = {
+        aws: ['aws_instance.main','aws_vpc.main','aws_security_group.main'],
+        azure: ['azurerm_virtual_machine.main','azurerm_virtual_network.main','azurerm_nsg.main'],
+        gcp: ['google_compute_instance.main','google_compute_network.main','google_compute_firewall.main']
+      };
+      const res = resMap[p] || resMap.aws;
+      return '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-info">🔍  Dry-run: ' + p.toUpperCase() + ' / ' + escHTML(r) + '</span></span>' +
+        '<span class="it-line"><span class="it-key">Plan:</span> <span class="it-val">' + res.length + ' to add, 0 to change, 0 to destroy</span></span>' +
+        '<span class="it-line"></span>' +
+        res.map(function(x){ return '<span class="it-line">  <span class="it-success">+</span> <span class="it-dim">' + x + '</span></span>'; }).join('\n') +
+        '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-success">✓  Preview done. Nothing provisioned.</span></span>' +
+        '<span class="it-line"></span>';
+    },
+
+    regions: function(args) {
+      const p = parseArg(args,'provider') || 'aws';
+      const regionMap = {
+        aws: [['us-east-1','US East (N. Virginia)'],['us-west-2','US West (Oregon)'],['eu-west-1','EU (Ireland)'],['ap-south-1','Asia Pacific (Mumbai)'],['ap-southeast-1','Asia Pacific (Singapore)'],['ap-northeast-1','Asia Pacific (Tokyo)'],['sa-east-1','South America (Sao Paulo)'],['eu-central-1','EU (Frankfurt)'],['ca-central-1','Canada (Central)']],
+        azure: [['eastus','East US'],['westus2','West US 2'],['westeurope','West Europe'],['southeastasia','Southeast Asia'],['centralindia','Central India'],['uksouth','UK South']],
+        gcp: [['us-central1','Iowa'],['us-east1','South Carolina'],['europe-west1','Belgium'],['asia-south1','Mumbai'],['asia-southeast1','Singapore'],['australia-southeast1','Sydney']]
+      };
+      const list = regionMap[p];
+      if (!list) return '<span class="it-line"><span class="it-error">✗  Unknown provider. Use: aws, azure, gcp</span></span><span class="it-line"></span>';
+      return '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-info">☁  ' + p.toUpperCase() + ' Regions:</span></span>' +
+        '<span class="it-line"></span>' +
+        list.map(function(pair){ return '<span class="it-line">  <span class="it-success">' + pair[0].padEnd(22) + '</span><span class="it-dim">' + pair[1] + '</span></span>'; }).join('\n') +
+        '<span class="it-line"></span>';
+    },
+
+    deploy: function(args) {
+      const p = parseArg(args,'provider') || 'aws';
+      return '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-info">🚀  Deploying to ' + p.toUpperCase() + '... (demo mode)</span></span>' +
+        '<span class="it-line">  Validating credentials <span class="it-success">✓</span></span>' +
+        '<span class="it-line">  Generating Terraform plan <span class="it-success">✓</span></span>' +
+        '<span class="it-line">  Applying infrastructure <span class="it-success">✓</span></span>' +
+        '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-success">✓  Done! (no real resources created in demo)</span></span>' +
+        '<span class="it-line"></span>';
+    },
+
+    status: function() {
+      return '<span class="it-line"></span>' +
+        '<span class="it-line"><span class="it-key">Platform Status</span></span>' +
+        '<span class="it-line"><span class="it-dim">────────────────────────</span></span>' +
+        '<span class="it-line">  <span class="it-success">●</span> CLI Engine     <span class="it-success">Online</span></span>' +
+        '<span class="it-line">  <span class="it-success">●</span> AWS Bridge     <span class="it-success">Online</span></span>' +
+        '<span class="it-line">  <span class="it-success">●</span> Azure Bridge   <span class="it-success">Online</span></span>' +
+        '<span class="it-line">  <span class="it-success">●</span> GCP Bridge     <span class="it-success">Online</span></span>' +
+        '<span class="it-line">  <span class="it-success">●</span> Cost Engine    <span class="it-success">Online</span></span>' +
+        '<span class="it-line"></span>';
+    }
+  };
+
+  function appendLine(html) {
+    itermOutput.insertAdjacentHTML('beforeend', html);
+    itermOutput.scrollTop = itermOutput.scrollHeight;
+  }
+
+  function runTermCmd(cmdOverride) {
+    const raw = (cmdOverride !== undefined ? cmdOverride : itermInput.value).trim();
+    if (!raw) return;
+    if (cmdOverride === undefined) { cmdHistory.unshift(raw); histIdx = -1; itermInput.value = ''; }
+    appendLine('<span class="it-line"><span class="it-prompt">➜</span> <span class="it-cmd">' + escHTML(raw) + '</span></span>');
+    const parts = raw.split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1).join(' ');
+    if (cmd === 'clear') { setTimeout(function(){ itermOutput.innerHTML = ''; }, 100); return; }
+    const fn = termResponses[cmd];
+    if (fn) { setTimeout(function(){ appendLine(fn(args)); }, 200); }
+    else { appendLine('<span class="it-line"><span class="it-error">✗  Not found: "' + escHTML(cmd) + '". Type <span class="it-val">help</span> for commands.</span></span><span class="it-line"></span>'); }
+  }
+
+  function injectCmd(cmd) { itermInput.value = cmd; itermInput.focus(); runTermCmd(); }
+
+  itermInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') runTermCmd();
+    if (e.key === 'ArrowUp') { if (histIdx < cmdHistory.length-1) itermInput.value = cmdHistory[++histIdx]; e.preventDefault(); }
+    if (e.key === 'ArrowDown') { if (histIdx > 0) { itermInput.value = cmdHistory[--histIdx]; } else { histIdx = -1; itermInput.value = ''; } e.preventDefault(); }
+  });
+
+  // ─── INSTANCE DATABASE ───
+  var R = 84;
+  var INSTANCES = [
+    // AWS GENERAL PURPOSE
+    {provider:'aws',name:'t3.nano',     cat:'general',cpu:2,  ram:0.5,  gpu:0, gpuMem:0,  priceUsd:0.0052,  gpuName:''},
+    {provider:'aws',name:'t3.micro',    cat:'general',cpu:2,  ram:1,    gpu:0, gpuMem:0,  priceUsd:0.0104,  gpuName:''},
+    {provider:'aws',name:'t3.small',    cat:'general',cpu:2,  ram:2,    gpu:0, gpuMem:0,  priceUsd:0.0208,  gpuName:''},
+    {provider:'aws',name:'t3.medium',   cat:'general',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.0416,  gpuName:''},
+    {provider:'aws',name:'t3.large',    cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.0832,  gpuName:''},
+    {provider:'aws',name:'t3.xlarge',   cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.1664,  gpuName:''},
+    {provider:'aws',name:'t3.2xlarge',  cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.3328,  gpuName:''},
+    {provider:'aws',name:'m6i.large',   cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.096,   gpuName:''},
+    {provider:'aws',name:'m6i.xlarge',  cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.192,   gpuName:''},
+    {provider:'aws',name:'m6i.2xlarge', cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.384,   gpuName:''},
+    {provider:'aws',name:'m6i.4xlarge', cat:'general',cpu:16, ram:64,   gpu:0, gpuMem:0,  priceUsd:0.768,   gpuName:''},
+    {provider:'aws',name:'m6i.8xlarge', cat:'general',cpu:32, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.536,   gpuName:''},
+    {provider:'aws',name:'m6i.16xlarge',cat:'general',cpu:64, ram:256,  gpu:0, gpuMem:0,  priceUsd:3.072,   gpuName:''},
+    {provider:'aws',name:'m6i.32xlarge',cat:'general',cpu:128,ram:512,  gpu:0, gpuMem:0,  priceUsd:6.144,   gpuName:''},
+    // AWS COMPUTE OPTIMIZED
+    {provider:'aws',name:'c6i.large',   cat:'compute',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.085,   gpuName:''},
+    {provider:'aws',name:'c6i.xlarge',  cat:'compute',cpu:4,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.170,   gpuName:''},
+    {provider:'aws',name:'c6i.2xlarge', cat:'compute',cpu:8,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.340,   gpuName:''},
+    {provider:'aws',name:'c6i.4xlarge', cat:'compute',cpu:16, ram:32,   gpu:0, gpuMem:0,  priceUsd:0.680,   gpuName:''},
+    {provider:'aws',name:'c6i.8xlarge', cat:'compute',cpu:32, ram:64,   gpu:0, gpuMem:0,  priceUsd:1.360,   gpuName:''},
+    {provider:'aws',name:'c6i.16xlarge',cat:'compute',cpu:64, ram:128,  gpu:0, gpuMem:0,  priceUsd:2.720,   gpuName:''},
+    {provider:'aws',name:'c6i.32xlarge',cat:'compute',cpu:128,ram:256,  gpu:0, gpuMem:0,  priceUsd:5.440,   gpuName:''},
+    {provider:'aws',name:'c7g.medium',  cat:'compute',cpu:1,  ram:2,    gpu:0, gpuMem:0,  priceUsd:0.0363,  gpuName:''},
+    {provider:'aws',name:'c7g.large',   cat:'compute',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.0725,  gpuName:''},
+    {provider:'aws',name:'c7g.xlarge',  cat:'compute',cpu:4,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.145,   gpuName:''},
+    // AWS MEMORY OPTIMIZED
+    {provider:'aws',name:'r6i.large',   cat:'memory', cpu:2,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.126,   gpuName:''},
+    {provider:'aws',name:'r6i.xlarge',  cat:'memory', cpu:4,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.252,   gpuName:''},
+    {provider:'aws',name:'r6i.2xlarge', cat:'memory', cpu:8,  ram:64,   gpu:0, gpuMem:0,  priceUsd:0.504,   gpuName:''},
+    {provider:'aws',name:'r6i.4xlarge', cat:'memory', cpu:16, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.008,   gpuName:''},
+    {provider:'aws',name:'r6i.8xlarge', cat:'memory', cpu:32, ram:256,  gpu:0, gpuMem:0,  priceUsd:2.016,   gpuName:''},
+    {provider:'aws',name:'r6i.16xlarge',cat:'memory', cpu:64, ram:512,  gpu:0, gpuMem:0,  priceUsd:4.032,   gpuName:''},
+    {provider:'aws',name:'x2idn.16xlarge',cat:'memory',cpu:64,ram:1024, gpu:0, gpuMem:0,  priceUsd:6.669,   gpuName:''},
+    {provider:'aws',name:'x2idn.32xlarge',cat:'memory',cpu:128,ram:2048,gpu:0, gpuMem:0,  priceUsd:13.338,  gpuName:''},
+    // AWS GPU
+    {provider:'aws',name:'p3.2xlarge',  cat:'gpu',    cpu:8,  ram:61,   gpu:1, gpuMem:16, priceUsd:3.06,    gpuName:'V100'},
+    {provider:'aws',name:'p3.8xlarge',  cat:'gpu',    cpu:32, ram:244,  gpu:4, gpuMem:64, priceUsd:12.24,   gpuName:'V100'},
+    {provider:'aws',name:'p3.16xlarge', cat:'gpu',    cpu:64, ram:488,  gpu:8, gpuMem:128,priceUsd:24.48,   gpuName:'V100'},
+    {provider:'aws',name:'p4d.24xlarge',cat:'gpu',    cpu:96, ram:1152, gpu:8, gpuMem:320,priceUsd:32.77,   gpuName:'A100 40GB'},
+    {provider:'aws',name:'p4de.24xlarge',cat:'gpu',   cpu:96, ram:1152, gpu:8, gpuMem:640,priceUsd:40.97,   gpuName:'A100 80GB'},
+    {provider:'aws',name:'g4dn.xlarge', cat:'gpu',    cpu:4,  ram:16,   gpu:1, gpuMem:16, priceUsd:0.526,   gpuName:'T4'},
+    {provider:'aws',name:'g4dn.2xlarge',cat:'gpu',    cpu:8,  ram:32,   gpu:1, gpuMem:16, priceUsd:0.752,   gpuName:'T4'},
+    {provider:'aws',name:'g4dn.4xlarge',cat:'gpu',    cpu:16, ram:64,   gpu:1, gpuMem:16, priceUsd:1.204,   gpuName:'T4'},
+    {provider:'aws',name:'g4dn.8xlarge',cat:'gpu',    cpu:32, ram:128,  gpu:1, gpuMem:16, priceUsd:2.264,   gpuName:'T4'},
+    {provider:'aws',name:'g5.xlarge',   cat:'gpu',    cpu:4,  ram:16,   gpu:1, gpuMem:24, priceUsd:1.006,   gpuName:'A10G'},
+    {provider:'aws',name:'g5.2xlarge',  cat:'gpu',    cpu:8,  ram:32,   gpu:1, gpuMem:24, priceUsd:1.212,   gpuName:'A10G'},
+    {provider:'aws',name:'g5.4xlarge',  cat:'gpu',    cpu:16, ram:64,   gpu:1, gpuMem:24, priceUsd:1.624,   gpuName:'A10G'},
+    {provider:'aws',name:'g5.48xlarge', cat:'gpu',    cpu:192,ram:768,  gpu:8, gpuMem:192,priceUsd:16.288,  gpuName:'A10G'},
+    // AZURE GENERAL PURPOSE
+    {provider:'azure',name:'B1s',       cat:'general',cpu:1,  ram:1,    gpu:0, gpuMem:0,  priceUsd:0.0104,  gpuName:''},
+    {provider:'azure',name:'B2s',       cat:'general',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.0416,  gpuName:''},
+    {provider:'azure',name:'B2ms',      cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.0832,  gpuName:''},
+    {provider:'azure',name:'B4ms',      cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.166,   gpuName:''},
+    {provider:'azure',name:'B8ms',      cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.333,   gpuName:''},
+    {provider:'azure',name:'D2s_v5',    cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.096,   gpuName:''},
+    {provider:'azure',name:'D4s_v5',    cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.192,   gpuName:''},
+    {provider:'azure',name:'D8s_v5',    cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.384,   gpuName:''},
+    {provider:'azure',name:'D16s_v5',   cat:'general',cpu:16, ram:64,   gpu:0, gpuMem:0,  priceUsd:0.768,   gpuName:''},
+    {provider:'azure',name:'D32s_v5',   cat:'general',cpu:32, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.536,   gpuName:''},
+    {provider:'azure',name:'D64s_v5',   cat:'general',cpu:64, ram:256,  gpu:0, gpuMem:0,  priceUsd:3.072,   gpuName:''},
+    {provider:'azure',name:'D96s_v5',   cat:'general',cpu:96, ram:384,  gpu:0, gpuMem:0,  priceUsd:4.608,   gpuName:''},
+    // AZURE COMPUTE OPTIMIZED
+    {provider:'azure',name:'F2s_v2',    cat:'compute',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.085,   gpuName:''},
+    {provider:'azure',name:'F4s_v2',    cat:'compute',cpu:4,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.169,   gpuName:''},
+    {provider:'azure',name:'F8s_v2',    cat:'compute',cpu:8,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.338,   gpuName:''},
+    {provider:'azure',name:'F16s_v2',   cat:'compute',cpu:16, ram:32,   gpu:0, gpuMem:0,  priceUsd:0.677,   gpuName:''},
+    {provider:'azure',name:'F32s_v2',   cat:'compute',cpu:32, ram:64,   gpu:0, gpuMem:0,  priceUsd:1.354,   gpuName:''},
+    {provider:'azure',name:'F72s_v2',   cat:'compute',cpu:72, ram:144,  gpu:0, gpuMem:0,  priceUsd:3.045,   gpuName:''},
+    // AZURE MEMORY OPTIMIZED
+    {provider:'azure',name:'E2s_v5',    cat:'memory', cpu:2,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.126,   gpuName:''},
+    {provider:'azure',name:'E4s_v5',    cat:'memory', cpu:4,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.252,   gpuName:''},
+    {provider:'azure',name:'E8s_v5',    cat:'memory', cpu:8,  ram:64,   gpu:0, gpuMem:0,  priceUsd:0.504,   gpuName:''},
+    {provider:'azure',name:'E16s_v5',   cat:'memory', cpu:16, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.008,   gpuName:''},
+    {provider:'azure',name:'E32s_v5',   cat:'memory', cpu:32, ram:256,  gpu:0, gpuMem:0,  priceUsd:2.016,   gpuName:''},
+    {provider:'azure',name:'E64s_v5',   cat:'memory', cpu:64, ram:512,  gpu:0, gpuMem:0,  priceUsd:4.032,   gpuName:''},
+    {provider:'azure',name:'M8ms',      cat:'memory', cpu:8,  ram:218,  gpu:0, gpuMem:0,  priceUsd:2.244,   gpuName:''},
+    {provider:'azure',name:'M64ms',     cat:'memory', cpu:64, ram:1750, gpu:0, gpuMem:0,  priceUsd:17.348,  gpuName:''},
+    {provider:'azure',name:'M128ms',    cat:'memory', cpu:128,ram:3800, gpu:0, gpuMem:0,  priceUsd:38.913,  gpuName:''},
+    // AZURE GPU
+    {provider:'azure',name:'NC4as_T4_v3', cat:'gpu',  cpu:4,  ram:28,   gpu:1, gpuMem:16, priceUsd:0.526,   gpuName:'T4'},
+    {provider:'azure',name:'NC8as_T4_v3', cat:'gpu',  cpu:8,  ram:56,   gpu:1, gpuMem:16, priceUsd:0.752,   gpuName:'T4'},
+    {provider:'azure',name:'NC16as_T4_v3',cat:'gpu',  cpu:16, ram:110,  gpu:1, gpuMem:16, priceUsd:1.204,   gpuName:'T4'},
+    {provider:'azure',name:'NC64as_T4_v3',cat:'gpu',  cpu:64, ram:440,  gpu:4, gpuMem:64, priceUsd:4.352,   gpuName:'T4'},
+    {provider:'azure',name:'NC6s_v3',   cat:'gpu',    cpu:6,  ram:112,  gpu:1, gpuMem:16, priceUsd:3.06,    gpuName:'V100'},
+    {provider:'azure',name:'NC12s_v3',  cat:'gpu',    cpu:12, ram:224,  gpu:2, gpuMem:32, priceUsd:6.12,    gpuName:'V100'},
+    {provider:'azure',name:'NC24s_v3',  cat:'gpu',    cpu:24, ram:448,  gpu:4, gpuMem:64, priceUsd:12.24,   gpuName:'V100'},
+    {provider:'azure',name:'ND96asr_v4',cat:'gpu',    cpu:96, ram:900,  gpu:8, gpuMem:320,priceUsd:32.77,   gpuName:'A100 40GB'},
+    {provider:'azure',name:'ND96amsr_v4',cat:'gpu',   cpu:96, ram:1900, gpu:8, gpuMem:640,priceUsd:40.97,   gpuName:'A100 80GB'},
+    // GCP GENERAL PURPOSE
+    {provider:'gcp',name:'e2-micro',      cat:'general',cpu:2,  ram:1,    gpu:0, gpuMem:0,  priceUsd:0.0084,  gpuName:''},
+    {provider:'gcp',name:'e2-small',      cat:'general',cpu:2,  ram:2,    gpu:0, gpuMem:0,  priceUsd:0.0168,  gpuName:''},
+    {provider:'gcp',name:'e2-medium',     cat:'general',cpu:2,  ram:4,    gpu:0, gpuMem:0,  priceUsd:0.0335,  gpuName:''},
+    {provider:'gcp',name:'e2-standard-2', cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.0671,  gpuName:''},
+    {provider:'gcp',name:'e2-standard-4', cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.1342,  gpuName:''},
+    {provider:'gcp',name:'e2-standard-8', cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.2684,  gpuName:''},
+    {provider:'gcp',name:'e2-standard-16',cat:'general',cpu:16, ram:64,   gpu:0, gpuMem:0,  priceUsd:0.5368,  gpuName:''},
+    {provider:'gcp',name:'e2-standard-32',cat:'general',cpu:32, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.0736,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-2', cat:'general',cpu:2,  ram:8,    gpu:0, gpuMem:0,  priceUsd:0.0971,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-4', cat:'general',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.1942,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-8', cat:'general',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.3884,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-16',cat:'general',cpu:16, ram:64,   gpu:0, gpuMem:0,  priceUsd:0.7768,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-32',cat:'general',cpu:32, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.5536,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-64',cat:'general',cpu:64, ram:256,  gpu:0, gpuMem:0,  priceUsd:3.1072,  gpuName:''},
+    {provider:'gcp',name:'n2-standard-80',cat:'general',cpu:80, ram:320,  gpu:0, gpuMem:0,  priceUsd:3.884,   gpuName:''},
+    // GCP COMPUTE OPTIMIZED
+    {provider:'gcp',name:'c2-standard-4', cat:'compute',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.2088,  gpuName:''},
+    {provider:'gcp',name:'c2-standard-8', cat:'compute',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.4176,  gpuName:''},
+    {provider:'gcp',name:'c2-standard-16',cat:'compute',cpu:16, ram:64,   gpu:0, gpuMem:0,  priceUsd:0.8352,  gpuName:''},
+    {provider:'gcp',name:'c2-standard-30',cat:'compute',cpu:30, ram:120,  gpu:0, gpuMem:0,  priceUsd:1.566,   gpuName:''},
+    {provider:'gcp',name:'c2-standard-60',cat:'compute',cpu:60, ram:240,  gpu:0, gpuMem:0,  priceUsd:3.132,   gpuName:''},
+    {provider:'gcp',name:'c2d-standard-4',cat:'compute',cpu:4,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.1800,  gpuName:''},
+    {provider:'gcp',name:'c2d-standard-8',cat:'compute',cpu:8,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.3600,  gpuName:''},
+    // GCP MEMORY OPTIMIZED
+    {provider:'gcp',name:'n2-highmem-2',  cat:'memory', cpu:2,  ram:16,   gpu:0, gpuMem:0,  priceUsd:0.1309,  gpuName:''},
+    {provider:'gcp',name:'n2-highmem-4',  cat:'memory', cpu:4,  ram:32,   gpu:0, gpuMem:0,  priceUsd:0.2618,  gpuName:''},
+    {provider:'gcp',name:'n2-highmem-8',  cat:'memory', cpu:8,  ram:64,   gpu:0, gpuMem:0,  priceUsd:0.5236,  gpuName:''},
+    {provider:'gcp',name:'n2-highmem-16', cat:'memory', cpu:16, ram:128,  gpu:0, gpuMem:0,  priceUsd:1.0472,  gpuName:''},
+    {provider:'gcp',name:'n2-highmem-32', cat:'memory', cpu:32, ram:256,  gpu:0, gpuMem:0,  priceUsd:2.0944,  gpuName:''},
+    {provider:'gcp',name:'n2-highmem-64', cat:'memory', cpu:64, ram:512,  gpu:0, gpuMem:0,  priceUsd:4.1888,  gpuName:''},
+    {provider:'gcp',name:'m1-ultramem-40',cat:'memory', cpu:40, ram:961,  gpu:0, gpuMem:0,  priceUsd:6.3039,  gpuName:''},
+    {provider:'gcp',name:'m1-ultramem-80',cat:'memory', cpu:80, ram:1922, gpu:0, gpuMem:0,  priceUsd:12.608,  gpuName:''},
+    {provider:'gcp',name:'m2-ultramem-208',cat:'memory',cpu:208,ram:5888, gpu:0, gpuMem:0,  priceUsd:42.189,  gpuName:''},
+    // GCP GPU
+    {provider:'gcp',name:'a2-highgpu-1g', cat:'gpu',    cpu:12, ram:85,   gpu:1, gpuMem:40, priceUsd:3.673,   gpuName:'A100 40GB'},
+    {provider:'gcp',name:'a2-highgpu-2g', cat:'gpu',    cpu:24, ram:170,  gpu:2, gpuMem:80, priceUsd:7.346,   gpuName:'A100 40GB'},
+    {provider:'gcp',name:'a2-highgpu-4g', cat:'gpu',    cpu:48, ram:340,  gpu:4, gpuMem:160,priceUsd:14.692,  gpuName:'A100 40GB'},
+    {provider:'gcp',name:'a2-highgpu-8g', cat:'gpu',    cpu:96, ram:680,  gpu:8, gpuMem:320,priceUsd:29.384,  gpuName:'A100 40GB'},
+    {provider:'gcp',name:'a2-megagpu-16g',cat:'gpu',    cpu:96, ram:1360, gpu:16,gpuMem:640,priceUsd:55.739,  gpuName:'A100 40GB'},
+    {provider:'gcp',name:'a2-ultragpu-1g',cat:'gpu',    cpu:12, ram:170,  gpu:1, gpuMem:80, priceUsd:5.095,   gpuName:'A100 80GB'},
+    {provider:'gcp',name:'a2-ultragpu-8g',cat:'gpu',    cpu:96, ram:1360, gpu:8, gpuMem:640,priceUsd:40.760,  gpuName:'A100 80GB'},
+    {provider:'gcp',name:'g2-standard-4', cat:'gpu',    cpu:4,  ram:16,   gpu:1, gpuMem:24, priceUsd:0.834,   gpuName:'L4'},
+    {provider:'gcp',name:'g2-standard-8', cat:'gpu',    cpu:8,  ram:32,   gpu:1, gpuMem:24, priceUsd:1.006,   gpuName:'L4'},
+    {provider:'gcp',name:'g2-standard-16',cat:'gpu',    cpu:16, ram:64,   gpu:1, gpuMem:24, priceUsd:1.512,   gpuName:'L4'},
+    {provider:'gcp',name:'g2-standard-48',cat:'gpu',    cpu:48, ram:192,  gpu:4, gpuMem:96, priceUsd:5.376,   gpuName:'L4'},
+    {provider:'gcp',name:'g2-standard-96',cat:'gpu',    cpu:96, ram:384,  gpu:8, gpuMem:192,priceUsd:10.752,  gpuName:'L4'},
+  ];
+
+  var dbFilter = { provider: 'all', cat: 'all' };
+  var dbSort = { col: 'priceUsd', dir: 1 };
+
+  function filterDB(type, val, btn) {
+    dbFilter[type] = val;
+    var grpClass = type === 'provider' ? '.db-provider-btn' : '.db-cat-btn';
+    document.querySelectorAll(grpClass).forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderDB();
+  }
+
+  function sortDB(col) {
+    if (dbSort.col === col) dbSort.dir *= -1;
+    else { dbSort.col = col; dbSort.dir = 1; }
+    renderDB();
+  }
+
+  function renderDB() {
+    var search = (document.getElementById('dbSearch').value || '').toLowerCase();
+    var rows = INSTANCES.filter(function(i) {
+      if (dbFilter.provider !== 'all' && i.provider !== dbFilter.provider) return false;
+      if (dbFilter.cat !== 'all' && i.cat !== dbFilter.cat) return false;
+      if (search && !i.name.toLowerCase().includes(search) && !(i.gpuName||'').toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    var col = dbSort.col;
+    rows.sort(function(a,b) {
+      var av = a[col], bv = b[col];
+      if (typeof av === 'string') return av.localeCompare(bv) * dbSort.dir;
+      return (av - bv) * dbSort.dir;
+    });
+
+    var catLabel = { general:'General', compute:'Compute', memory:'Memory', gpu:'GPU' };
+    var tbody = document.getElementById('dbTableBody');
+    tbody.innerHTML = rows.map(function(i) {
+      var hr = (i.priceUsd * R).toFixed(2);
+      var mo = Math.round(i.priceUsd * 730 * R);
+      return '<tr>' +
+        '<td><span class="provider-pill pill-' + i.provider + '">' + i.provider.toUpperCase() + '</span></td>' +
+        '<td class="inst-name">' + i.name + '</td>' +
+        '<td><span class="cat-pill ' + (i.cat==='gpu'?'cat-gpu':i.cat==='compute'?'cat-compute':i.cat==='memory'?'cat-memory':'') + '">' + catLabel[i.cat] + '</span></td>' +
+        '<td>' + i.cpu + '</td>' +
+        '<td>' + i.ram + '</td>' +
+        '<td class="' + (i.gpu?'gpu-tag':'no-gpu') + '">' + (i.gpu ? i.gpu + 'x ' + (i.gpuName||'GPU') : '—') + '</td>' +
+        '<td class="' + (i.gpuMem?'gpu-tag':'no-gpu') + '">' + (i.gpuMem ? i.gpuMem + ' GB' : '—') + '</td>' +
+        '<td class="price-inr">₹' + hr + '</td>' +
+        '<td class="price-inr price-mo">₹' + mo.toLocaleString('en-IN') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    document.getElementById('dbCount').textContent = rows.length + ' instances shown';
+  }
+
+  renderDB();
+
+  // ─── SMART ESTIMATOR ───
+  var currentInstType = 'general';
+  var regionMultiplier = { 'us-east':1.0, 'us-west':1.02, 'eu':1.08, 'ap':1.05 };
+
+  function setInstType(type, btn) {
+    currentInstType = type;
+    document.querySelectorAll('.type-toggle').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('cpuRamControls').style.display = type === 'gpu' ? 'none' : 'block';
+    document.getElementById('gpuControls').style.display = type === 'gpu' ? 'block' : 'none';
+    smartUpdate();
+  }
+
+  function smartUpdate() {
+    var provider = document.getElementById('calcProvider').value;
+    var region   = document.getElementById('calcRegion').value;
+    var rMult    = regionMultiplier[region] || 1.0;
+    var matches  = [];
+
+    if (currentInstType === 'gpu') {
+      var gpuCount = parseInt(document.getElementById('gpuCountSlider').value);
+      var gpuMem   = parseInt(document.getElementById('gpuMemSlider').value);
+      var gpuModel = document.getElementById('gpuModelFilter').value;
+      matches = INSTANCES.filter(function(i) {
+        if (i.cat !== 'gpu') return false;
+        if (provider !== 'all' && i.provider !== provider) return false;
+        if (i.gpu < gpuCount) return false;
+        if (i.gpuMem < gpuMem) return false;
+        if (gpuModel !== 'all' && !(i.gpuName||'').includes(gpuModel)) return false;
+        return true;
+      });
+    } else {
+      var cpu = parseInt(document.getElementById('cpuSlider').value);
+      var ram = parseInt(document.getElementById('ramSlider').value);
+      matches = INSTANCES.filter(function(i) {
+        if (i.cat !== currentInstType) return false;
+        if (provider !== 'all' && i.provider !== provider) return false;
+        if (i.cpu < cpu) return false;
+        if (i.ram < ram) return false;
+        return true;
+      });
+    }
+
+    matches.sort(function(a,b){ return a.priceUsd - b.priceUsd; });
+
+    document.getElementById('smartMatchCount').textContent = matches.length + ' found';
+    var list = document.getElementById('smartMatchList');
+    var bestWrap = document.getElementById('smartBestWrap');
+
+    if (matches.length === 0) {
+      list.innerHTML = '<div class="smart-placeholder">No exact matches — try adjusting your requirements.</div>';
+      bestWrap.style.display = 'none';
+      return;
+    }
+
+    list.innerHTML = matches.slice(0, 12).map(function(i, idx) {
+      var hr   = (i.priceUsd * R * rMult).toFixed(2);
+      var mo   = Math.round(i.priceUsd * 730 * R * rMult);
+      var specs = currentInstType === 'gpu'
+        ? i.gpu + 'x ' + (i.gpuName||'GPU') + ' · ' + i.gpuMem + 'GB VRAM · ' + i.cpu + ' vCPU · ' + i.ram + 'GB RAM'
+        : i.cpu + ' vCPU · ' + i.ram + ' GB RAM';
+      return '<div class="smart-inst-row' + (idx === 0 ? ' best-match' : '') + '">' +
+        '<span class="provider-pill pill-' + i.provider + '" style="font-size:0.68rem;padding:2px 8px;">' + i.provider.toUpperCase() + '</span>' +
+        '<span class="smart-inst-pill">' + i.name + '</span>' +
+        '<span class="smart-inst-specs">' + specs + '</span>' +
+        '<span class="smart-inst-price">₹' + hr + '/hr<small>₹' + mo.toLocaleString('en-IN') + '/mo</small></span>' +
+        '</div>';
+    }).join('');
+
+    var best = matches[0];
+    var bHr  = (best.priceUsd * R * rMult).toFixed(2);
+    var bMo  = Math.round(best.priceUsd * 730 * R * rMult);
+    document.getElementById('smartBestCard').innerHTML =
+      '<div class="best-stat"><div class="best-stat-val" style="font-size:1rem;color:#93c5fd;">' + best.name + '</div><div class="best-stat-label">' + best.provider.toUpperCase() + ' · Best match</div></div>' +
+      '<div class="best-stat"><div class="best-stat-val">₹' + bHr + '</div><div class="best-stat-label">Per Hour</div></div>' +
+      '<div class="best-stat"><div class="best-stat-val">₹' + bMo.toLocaleString('en-IN') + '</div><div class="best-stat-label">Per Month</div></div>';
+    bestWrap.style.display = 'block';
+  }
+
+  // init sliders
+  ['gpuCountSlider','gpuMemSlider'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) updateSliderFill(el);
+  });
+  smartUpdate();
+</script>
+</body>
+</html>

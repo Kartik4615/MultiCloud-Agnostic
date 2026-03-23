@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Cloud Recommender — MultiCloud Agnostic Platform</title>
+<meta name="description" content="Get AI-powered cloud recommendations tailored to your budget and workload across AWS, Azure, and GCP.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --bg2: #0d1117;
+    --bg3: #111620;
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --purple: #8b5cf6;
+    --purple2: #c084fc;
+    --aws: #FF9900;
+    --azure: #0078D4;
+    --gcp: #4285F4;
+    --font-display: 'Times New Roman', Times, serif;
+    --font-body: 'Times New Roman', Times, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 16px;
+    --nav-bg: rgba(8,11,18,0.85);
+  }
+
+  body.light {
+    --bg: #f0f4f8; --bg2: #ffffff; --bg3: #f8fafc;
+    --surface: rgba(0,0,0,0.04); --surface-hover: rgba(0,0,0,0.07);
+    --border: rgba(0,0,0,0.09); --border-bright: rgba(0,0,0,0.18);
+    --text: #0f172a; --text-muted: #94a3b8; --text-dim: #475569;
+    --nav-bg: rgba(240,244,248,0.85);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+
+  /* BACKGROUND */
+  .mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .mesh::before { content:''; position:absolute; width:700px; height:700px; top:-150px; left:-150px; background:radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 70%); animation:drift1 18s ease-in-out infinite alternate; }
+  .mesh::after  { content:''; position:absolute; width:500px; height:500px; bottom:-100px; right:-100px; background:radial-gradient(circle,rgba(99,102,241,0.10) 0%,transparent 70%); animation:drift2 22s ease-in-out infinite alternate; }
+  @keyframes drift1 { from{transform:translate(0,0) scale(1)} to{transform:translate(60px,50px) scale(1.1)} }
+  @keyframes drift2 { from{transform:translate(0,0)} to{transform:translate(-50px,-60px) scale(1.12)} }
+  .grid-overlay { position:fixed; inset:0; z-index:0; pointer-events:none; background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px); background-size:60px 60px; mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%); }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 5%; height:68px; display:flex; align-items:center; justify-content:space-between; background:var(--nav-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+  .nav-logo { display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--text); text-decoration:none; letter-spacing:-0.01em; }
+  .nav-logo .logo-icon { width:32px; height:32px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .nav-back { display:inline-flex; align-items:center; gap:6px; color:var(--text-dim); text-decoration:none; font-size:0.88rem; font-weight:600; padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); transition:all 0.2s; }
+  .nav-back:hover { color:var(--text); background:var(--surface-hover); border-color:var(--border-bright); }
+  .theme-toggle { width:40px; height:40px; border-radius:10px; border:1px solid var(--border-bright); background:var(--surface); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.2s; }
+  .theme-toggle:hover { background:var(--surface-hover); border-color:var(--accent); }
+
+  /* MAIN */
+  main { position:relative; z-index:1; min-height:100vh; padding:100px 5% 80px; max-width:900px; margin:0 auto; }
+
+  /* HERO */
+  .page-hero { text-align:center; margin-bottom:48px; }
+  .page-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); color:#c084fc; font-size:0.75rem; font-weight:700; padding:5px 16px; border-radius:100px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1.2rem; }
+  .page-hero h1 { font-family:var(--font-display); font-size:clamp(2rem,5vw,3.2rem); font-weight:800; letter-spacing:-0.03em; line-height:1.1; margin-bottom:1rem; }
+  .page-hero h1 span { background:linear-gradient(135deg,#d8b4fe,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .page-hero p { color:var(--text-dim); font-size:1.05rem; max-width:560px; margin:0 auto; }
+
+  /* FORM CARD */
+  .rec-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .rec-card-section { padding:32px 36px; border-bottom:1px solid var(--border); }
+  .rec-card-section:last-child { border-bottom:none; }
+  .rec-section-label { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+  .rec-section-label::before { content:''; width:16px; height:2px; background:var(--purple); border-radius:2px; }
+
+  /* BUDGET ROW */
+  .budget-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .input-wrap { position:relative; }
+  .input-prefix { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.95rem; pointer-events:none; }
+  .form-input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--font-body); font-size:0.95rem; padding:12px 14px 12px 32px; outline:none; transition:border-color 0.2s; }
+  .form-input:focus { border-color:var(--purple); }
+  .form-select { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--font-body); font-size:0.9rem; padding:12px 14px; outline:none; transition:border-color 0.2s; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; cursor:pointer; }
+  .form-select:focus { border-color:var(--purple); }
+  body.light .form-input, body.light .form-select { background-color:#fff; color:var(--text); }
+
+  /* USER TYPE */
+  .user-type-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .user-type-btn { background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text-dim); font-family:var(--font-body); font-size:0.88rem; font-weight:600; padding:12px 16px; cursor:pointer; text-align:left; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
+  .user-type-btn.active { background:rgba(139,92,246,0.12); border-color:rgba(139,92,246,0.4); color:#c084fc; }
+  .user-type-btn:hover:not(.active) { background:var(--surface-hover); color:var(--text); }
+
+  /* TASK CHIPS */
+  .task-chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .task-chip { background:var(--surface); border:1px solid var(--border); border-radius:100px; color:var(--text-dim); font-size:0.82rem; font-weight:600; padding:7px 16px; cursor:pointer; transition:all 0.2s; user-select:none; }
+  .task-chip.active { background:rgba(139,92,246,0.14); border-color:rgba(139,92,246,0.45); color:#c084fc; }
+  .task-chip:hover:not(.active) { background:var(--surface-hover); color:var(--text); }
+
+  /* TEXTAREA */
+  .form-textarea { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--font-body); font-size:0.9rem; padding:14px 16px; outline:none; resize:vertical; min-height:100px; transition:border-color 0.2s; line-height:1.6; }
+  .form-textarea:focus { border-color:var(--purple); }
+  .form-textarea::placeholder { color:var(--text-muted); }
+  body.light .form-textarea { background-color:#fff; }
+
+  /* SUBMIT */
+  .submit-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:24px 36px; background:var(--bg3); border-top:1px solid var(--border); }
+  .submit-hint { font-size:0.82rem; color:var(--text-muted); }
+  .btn-submit { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,var(--purple),var(--accent2)); color:#fff; font-family:var(--font-body); font-size:1rem; font-weight:700; padding:14px 32px; border-radius:12px; border:none; cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; box-shadow:0 0 30px rgba(139,92,246,0.3); }
+  .btn-submit:hover { transform:translateY(-2px); box-shadow:0 0 50px rgba(139,92,246,0.5); }
+  .btn-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  /* LOADING */
+  .loading-wrap { display:none; text-align:center; padding:60px 36px; }
+  .loading-spinner { width:48px; height:48px; border:3px solid var(--border); border-top-color:var(--purple); border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text { color:var(--text-dim); font-size:0.95rem; }
+  .loading-dots::after { content:'...'; animation:dots 1.4s steps(4,end) infinite; }
+  @keyframes dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
+
+  /* RESULTS */
+  .results-wrap { display:none; margin-top:32px; }
+  .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+  .results-title { font-family:var(--font-display); font-size:1.3rem; font-weight:800; }
+  .btn-reset { background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-family:var(--font-body); font-size:0.82rem; padding:7px 16px; border-radius:8px; cursor:pointer; transition:all 0.2s; }
+  .btn-reset:hover { background:var(--surface-hover); color:var(--text); }
+
+  .provider-result { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px; transition:box-shadow 0.3s; }
+  .provider-result:hover { box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+  .provider-result-header { padding:20px 24px; display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .provider-rank { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:800; flex-shrink:0; }
+  .rank-1 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#000; }
+  .rank-2 { background:rgba(156,163,175,0.2); color:#9ca3af; border:1px solid rgba(156,163,175,0.3); }
+  .rank-3 { background:rgba(180,120,60,0.15); color:#cd7f32; border:1px solid rgba(180,120,60,0.25); }
+  .provider-result-name { font-weight:700; font-size:1.05rem; }
+  .provider-result-tag { font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:100px; }
+  .tag-aws   { background:rgba(255,153,0,0.12); color:var(--aws); border:1px solid rgba(255,153,0,0.25); }
+  .tag-azure { background:rgba(0,120,212,0.12); color:var(--azure); border:1px solid rgba(0,120,212,0.25); }
+  .tag-gcp   { background:rgba(66,133,244,0.12); color:var(--gcp); border:1px solid rgba(66,133,244,0.2); }
+  .provider-result-score { margin-left:auto; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted); }
+
+  .provider-result-body { padding:20px 24px; }
+  .result-summary { color:var(--text-dim); font-size:0.92rem; line-height:1.7; margin-bottom:16px; }
+  .result-services { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .result-service-chip { background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:0.78rem; color:var(--text-dim); padding:5px 12px; }
+  .result-cost { display:inline-flex; align-items:center; gap:6px; background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2); color:#4ade80; font-size:0.82rem; font-weight:700; padding:6px 14px; border-radius:8px; }
+  .result-pros-cons { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+  .pros, .cons { background:var(--bg3); border-radius:10px; padding:12px 14px; }
+  .pros-title { font-size:0.72rem; font-weight:700; color:#4ade80; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+  .cons-title { font-size:0.72rem; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+  .pros ul, .cons ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .pros li, .cons li { font-size:0.8rem; color:var(--text-dim); display:flex; align-items:flex-start; gap:6px; }
+  .pros li::before { content:'✓'; color:#4ade80; flex-shrink:0; }
+  .cons li::before { content:'✗'; color:#f87171; flex-shrink:0; }
+
+  .results-disclaimer { margin-top:20px; padding:14px 18px; background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:0.78rem; color:var(--text-muted); }
+
+  /* ERROR */
+  .error-box { background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.25); border-radius:12px; padding:20px 24px; color:#f87171; font-size:0.9rem; margin-top:20px; display:none; }
+
+  /* FOOTER */
+  footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:32px 5%; text-align:center; }
+  footer p { color:var(--text-muted); font-size:0.82rem; }
+
+  @media (max-width:700px) {
+    .budget-row { grid-template-columns:1fr; }
+    .user-type-grid { grid-template-columns:1fr 1fr; }
+    .result-pros-cons { grid-template-columns:1fr; }
+    .rec-card-section { padding:24px 20px; }
+    .submit-row { padding:20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mesh"></div>
+<div class="grid-overlay"></div>
+
+<nav>
+  <a href="./index.html" class="nav-logo">
+    <span class="logo-icon">☁️</span>
+    MultiCloud Agnostic Platform
+  </a>
+  <div class="nav-right">
+    <a href="./index.html" class="nav-back">← Back to Home</a>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
+  </div>
+</nav>
+
+<main>
+  <div class="page-hero">
+    <div class="page-badge">✨ AI-Powered</div>
+    <h1>Cloud Service<br><span>Recommender</span></h1>
+    <p>Enter your budget and workload — get tailored AWS, Azure &amp; GCP recommendations instantly.</p>
+  </div>
+
+  <div class="rec-card">
+
+    <!-- BUDGET -->
+    <div class="rec-card-section">
+      <div class="rec-section-label">Budget &amp; Period</div>
+      <div class="budget-row">
+        <div class="input-wrap">
+          <span class="input-prefix">₹</span>
+          <input class="form-input" id="budget" type="number" placeholder="e.g. 5000" min="0">
+        </div>
+        <select class="form-select" id="period">
+          <option value="month">Per Month</option>
+          <option value="year">Per Year</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- USER TYPE -->
+    <div class="rec-card-section">
+      <div class="rec-section-label">User Type</div>
+      <div class="user-type-grid">
+        <button class="user-type-btn active" data-type="startup" onclick="selectUserType(this)">🚀 Startup</button>
+        <button class="user-type-btn" data-type="enterprise" onclick="selectUserType(this)">🏢 Enterprise</button>
+        <button class="user-type-btn" data-type="individual" onclick="selectUserType(this)">👤 Individual / Freelancer</button>
+        <button class="user-type-btn" data-type="smb" onclick="selectUserType(this)">🏪 Small / Medium Business</button>
+      </div>
+    </div>
+
+    <!-- TASK CATEGORIES -->
+    <div class="rec-card-section">
+      <div class="rec-section-label">Task Categories <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);font-size:0.72rem;">(select all that apply)</span></div>
+      <div class="task-chips">
+        <span class="task-chip" onclick="toggleChip(this)">🌐 Web Hosting</span>
+        <span class="task-chip" onclick="toggleChip(this)">🤖 AI / ML</span>
+        <span class="task-chip" onclick="toggleChip(this)">🗄️ Databases</span>
+        <span class="task-chip" onclick="toggleChip(this)">📦 Storage</span>
+        <span class="task-chip" onclick="toggleChip(this)">⚙️ DevOps / CI-CD</span>
+        <span class="task-chip" onclick="toggleChip(this)">📊 Analytics</span>
+        <span class="task-chip" onclick="toggleChip(this)">⚡ Serverless</span>
+        <span class="task-chip" onclick="toggleChip(this)">🔗 Networking</span>
+        <span class="task-chip" onclick="toggleChip(this)">🔒 Security</span>
+        <span class="task-chip" onclick="toggleChip(this)">📡 IoT</span>
+        <span class="task-chip" onclick="toggleChip(this)">🎮 Gaming</span>
+        <span class="task-chip" onclick="toggleChip(this)">📹 Media / Streaming</span>
+      </div>
+    </div>
+
+    <!-- WORKLOAD DESCRIPTION -->
+    <div class="rec-card-section">
+      <div class="rec-section-label">Describe Your Workload</div>
+      <textarea class="form-textarea" id="workload" placeholder="e.g. I'm building a Node.js REST API with a PostgreSQL database. Expected ~10k users/day, need auto-scaling, and want to keep costs under ₹5000/month..."></textarea>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-row">
+      <span class="submit-hint">🔒 Powered by Claude AI · No data stored</span>
+      <button class="btn-submit" id="submitBtn" onclick="getRecommendations()">✨ Get Recommendations</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Analysing your workload<span class="loading-dots"></span></p>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div class="results-wrap" id="resultsWrap">
+    <div class="results-header">
+      <h2 class="results-title">🎯 Your Recommendations</h2>
+      <button class="btn-reset" onclick="resetForm()">← Try Again</button>
+    </div>
+    <div id="resultsContent"></div>
+    <div class="results-disclaimer">⚠️ These recommendations are AI-generated estimates. Actual pricing may vary. Always verify costs on the official AWS, Azure, and GCP pricing pages before making decisions.</div>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 MultiCloud Agnostic Platform · Built with ❤️ by Kartik Mahamuni</p>
+</footer>
+
+<script>
+  // ─── Theme ───
+  function toggleTheme() {
+    var isLight = document.body.classList.toggle('light');
+    document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  }
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+
+  // ─── UI helpers ───
+  function selectUserType(btn) {
+    document.querySelectorAll('.user-type-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  function toggleChip(chip) { chip.classList.toggle('active'); }
+
+  function getSelectedUserType() {
+    var btn = document.querySelector('.user-type-btn.active');
+    return btn ? btn.dataset.type : 'startup';
+  }
+  function getSelectedTasks() {
+    return Array.from(document.querySelectorAll('.task-chip.active')).map(function(c){ return c.textContent.trim(); });
+  }
+
+  // ─── Main recommend function ───
+  async function getRecommendations() {
+    var budget   = document.getElementById('budget').value;
+    var period   = document.getElementById('period').value;
+    var userType = getSelectedUserType();
+    var tasks    = getSelectedTasks();
+    var workload = document.getElementById('workload').value.trim();
+
+    if (!budget || budget <= 0) { showError('Please enter a valid budget amount.'); return; }
+    if (!workload && tasks.length === 0) { showError('Please describe your workload or select at least one task category.'); return; }
+
+    // Show loading
+    document.getElementById('loadingWrap').style.display = 'block';
+    document.getElementById('resultsWrap').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('submitBtn').disabled = true;
+
+    var budgetMonthly = period === 'year' ? Math.round(budget / 12) : budget;
+
+    var prompt = [
+      'You are a cloud infrastructure expert. A user needs recommendations for AWS, Azure, and GCP.',
+      '',
+      'User Profile:',
+      '- Type: ' + userType,
+      '- Monthly Budget: ₹' + budgetMonthly + ' (1 USD = ₹84)',
+      '- Task Categories: ' + (tasks.length ? tasks.join(', ') : 'Not specified'),
+      '- Workload Description: ' + (workload || 'Not provided'),
+      '',
+      'Provide recommendations for all three providers: AWS, Azure, and GCP.',
+      'Rank them 1st, 2nd, 3rd based on fit for this user.',
+      '',
+      'For each provider respond in this EXACT JSON format (no extra text, just valid JSON):',
+      '{',
+      '  "recommendations": [',
+      '    {',
+      '      "rank": 1,',
+      '      "provider": "AWS",',
+      '      "tag": "aws",',
+      '      "score": "9.2/10",',
+      '      "summary": "2-3 sentence summary of why this provider suits the user",',
+      '      "services": ["Service1", "Service2", "Service3", "Service4"],',
+      '      "estimatedMonthlyCost": "₹3,000 - ₹4,500",',
+      '      "pros": ["Pro 1", "Pro 2", "Pro 3"],',
+      '      "cons": ["Con 1", "Con 2"]',
+      '    }',
+      '  ]',
+      '}'
+    ].join('\n');
+
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!response.ok) throw new Error('API error: ' + response.status);
+      var data = await response.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if (!text) throw new Error('Empty response from AI.');
+
+      // Parse JSON
+      var clean = text.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(clean);
+      renderResults(parsed.recommendations);
+
+    } catch(err) {
+      showError('Could not get recommendations: ' + err.message + '. Please try again.');
+    } finally {
+      document.getElementById('loadingWrap').style.display = 'none';
+      document.getElementById('submitBtn').disabled = false;
+    }
+  }
+
+  function renderResults(recs) {
+    var tagColors = { aws:'tag-aws', azure:'tag-azure', gcp:'tag-gcp' };
+    var html = recs.map(function(r) {
+      var rankClass = 'rank-' + r.rank;
+      var tagClass  = tagColors[r.tag] || 'tag-aws';
+      var services  = (r.services||[]).map(function(s){ return '<span class="result-service-chip">' + s + '</span>'; }).join('');
+      var pros = (r.pros||[]).map(function(p){ return '<li>' + p + '</li>'; }).join('');
+      var cons = (r.cons||[]).map(function(c){ return '<li>' + c + '</li>'; }).join('');
+      return '<div class="provider-result">' +
+        '<div class="provider-result-header">' +
+          '<div class="provider-rank ' + rankClass + '">' + r.rank + '</div>' +
+          '<div class="provider-result-name">' + r.provider + '</div>' +
+          '<span class="provider-result-tag ' + tagClass + '">' + r.provider + '</span>' +
+          '<span class="provider-result-score">' + (r.score||'') + '</span>' +
+        '</div>' +
+        '<div class="provider-result-body">' +
+          '<p class="result-summary">' + (r.summary||'') + '</p>' +
+          '<div class="result-services">' + services + '</div>' +
+          '<div class="result-cost">💰 Est. ' + (r.estimatedMonthlyCost||'Varies') + '/month</div>' +
+          '<div class="result-pros-cons">' +
+            '<div class="pros"><div class="pros-title">Pros</div><ul>' + pros + '</ul></div>' +
+            '<div class="cons"><div class="cons-title">Cons</div><ul>' + cons + '</ul></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('resultsContent').innerHTML = html;
+    document.getElementById('resultsWrap').style.display = 'block';
+    document.getElementById('resultsWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function showError(msg) {
+    var box = document.getElementById('errorBox');
+    box.textContent = '⚠️ ' + msg;
+    box.style.display = 'block';
+    document.getElementById('loadingWrap').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  function resetForm() {
+    document.getElementById('resultsWrap').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
