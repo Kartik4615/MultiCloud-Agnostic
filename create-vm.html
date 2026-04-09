@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Create VM — MultiCloud Agnostic Platform</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2236;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f4ff;
+    --muted: #8892a4;
+    --blue: #3b82f6;
+    --blue-d: #2563eb;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --purple: #8b5cf6;
+    --aws: #ff9900;
+    --azure: #0078d4;
+    --gcp: #4285f4;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,14,26,0.95);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .nav-brand { font-size: 16px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .nav-brand span { color: var(--blue); }
+  .nav-back {
+    font-size: 13px; color: var(--muted); text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 6px; transition: all 0.2s;
+  }
+  .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* LAYOUT */
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .page-header p { color: var(--muted); font-size: 15px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+  @media(max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+  /* CARD */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 20px;
+  }
+
+  /* PROVIDER SELECTOR */
+  .providers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .provider-btn {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 10px;
+    cursor: pointer; text-align: center; transition: all 0.2s;
+    color: var(--muted);
+  }
+  .provider-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .provider-btn.active { border-color: var(--blue); color: var(--text); background: rgba(59,130,246,0.1); }
+  .provider-btn.aws.active  { border-color: var(--aws); background: rgba(255,153,0,0.1); }
+  .provider-btn.azure.active{ border-color: var(--azure); background: rgba(0,120,212,0.1); }
+  .provider-btn.gcp.active  { border-color: var(--gcp); background: rgba(66,133,244,0.1); }
+  .provider-logo { font-size: 22px; margin-bottom: 6px; }
+  .provider-name { font-size: 12px; font-weight: 600; }
+  .provider-badge {
+    display: inline-block; font-size: 10px; padding: 2px 6px;
+    border-radius: 4px; margin-top: 4px; font-weight: 600;
+  }
+  .badge-live  { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-mock  { background: rgba(245,158,11,0.15); color: var(--yellow); }
+
+  /* FORM */
+  .form-row { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  input, select {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    color: var(--text); font-size: 14px; outline: none; transition: border 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--blue); }
+  select option { background: var(--card2); }
+
+  /* SLIDER */
+  .slider-row { display: flex; align-items: center; gap: 12px; }
+  .slider-row input[type=range] {
+    flex: 1; padding: 0; height: 4px; background: var(--border);
+    border: none; cursor: pointer; accent-color: var(--blue);
+  }
+  .slider-val {
+    min-width: 52px; text-align: right; font-size: 14px;
+    font-weight: 600; color: var(--text);
+  }
+
+  /* TAGS */
+  .tags-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; }
+  .btn {
+    flex: 1; padding: 12px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border: none; transition: all 0.2s; display: flex;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-preview {
+    background: var(--card2); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-preview:hover { border-color: rgba(255,255,255,0.3); }
+  .btn-create {
+    background: var(--blue); color: white;
+  }
+  .btn-create:hover { background: var(--blue-d); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* SUMMARY CARD */
+  .summary-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--muted); }
+  .summary-value { font-weight: 600; }
+  .cost-highlight {
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);
+    border-radius: var(--radius-sm); padding: 14px; margin: 16px 0;
+    text-align: center;
+  }
+  .cost-highlight .cost-main { font-size: 28px; font-weight: 700; color: var(--blue); }
+  .cost-highlight .cost-sub  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* STATUS */
+  .status-box {
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; margin-top: 16px; display: none;
+    line-height: 1.6;
+  }
+  .status-info    { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+  .status-success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #86efac; }
+  .status-error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
+  .status-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+
+  /* RESULT */
+  .result-block {
+    background: #0d1117; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px;
+    font-family: 'Courier New', monospace; font-size: 12px;
+    color: #a8ff78; margin-top: 12px; display: none;
+    max-height: 260px; overflow-y: auto; white-space: pre-wrap;
+  }
+
+  /* API CONFIG */
+  .api-config {
+    background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25);
+    border-radius: var(--radius-sm); padding: 14px; margin-bottom: 24px;
+    font-size: 13px;
+  }
+  .api-config strong { color: var(--yellow); }
+  .api-url-row { display: flex; gap: 8px; margin-top: 8px; }
+  .api-url-row input { flex: 1; font-size: 12px; font-family: monospace; }
+  .api-url-row button {
+    padding: 8px 14px; background: var(--yellow); color: #000;
+    border: none; border-radius: 6px; font-size: 12px;
+    font-weight: 700; cursor: pointer;
+  }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.8s linear infinite; display: inline-block;
+  }
+
+  /* API STATUS DOT */
+  .api-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .api-dot.online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .api-dot.offline { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  .api-dot.checking{ background: var(--yellow);}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">☁️ <span>MultiCloud</span> Agnostic Platform</a>
+  <a class="nav-back" href="index.html">← Back to Home</a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>⚡ Create a Virtual Machine</h1>
+    <p>Provision a cloud VM on AWS, Azure, or GCP — no terminal needed.</p>
+  </div>
+
+  <!-- API Config banner -->
+  <div class="api-config" id="api-banner">
+    <strong>⚙️ Backend API URL</strong> — set this to your deployed backend address.
+    <div class="api-url-row">
+      <input type="text" id="api-url-input" placeholder="https://your-app.onrender.com" value=""/>
+      <button onclick="saveApiUrl()">Save</button>
+    </div>
+    <div style="margin-top:8px; color: var(--muted); font-size:12px;">
+      API Status: <span class="api-dot checking" id="api-dot"></span>
+      <span id="api-status-text">Checking...</span>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- LEFT: Form -->
+    <div>
+      <!-- Provider selector -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">1. Choose Cloud Provider</div>
+        <div class="providers">
+          <div class="provider-btn aws active" onclick="selectProvider('aws', this)">
+            <div class="provider-logo">🟠</div>
+            <div class="provider-name">AWS</div>
+            <div class="provider-badge badge-live">Live</div>
+          </div>
+          <div class="provider-btn azure" onclick="selectProvider('azure', this)">
+            <div class="provider-logo">🔵</div>
+            <div class="provider-name">Azure</div>
+            <div class="provider-badge badge-mock">Mock</div>
+          </div>
+          <div class="provider-btn gcp" onclick="selectProvider('gcp', this)">
+            <div class="provider-logo">🟡</div>
+            <div class="provider-name">GCP</div>
+            <div class="provider-badge badge-mock">Mock</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Region</label>
+          <select id="region">
+            <option value="ap-south-1">Asia Pacific — Mumbai (ap-south-1)</option>
+            <option value="us-east-1">US East — N. Virginia (us-east-1)</option>
+            <option value="us-west-2">US West — Oregon (us-west-2)</option>
+            <option value="eu-west-1">EU — Ireland (eu-west-1)</option>
+            <option value="ap-southeast-1">Asia Pacific — Singapore</option>
+            <option value="ap-northeast-1">Asia Pacific — Tokyo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- VM Config -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">2. Configure VM</div>
+
+        <div class="form-row">
+          <label>VM Name</label>
+          <input type="text" id="vm-name" placeholder="e.g. my-dev-server" value="dev-server-01"/>
+        </div>
+
+        <div class="form-row">
+          <label>vCPU Cores — <span id="cpu-val">2</span></label>
+          <div class="slider-row">
+            <input type="range" min="1" max="8" value="2" id="cpu-slider"
+                   oninput="updateSlider('cpu', this.value); updateEstimate()"/>
+            <span class="slider-val"><span id="cpu-val2">2</span> vCPU</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>RAM — <span id="ram-val">4</span> GB</label>
+          <div class="slider-row">
+            <input type="range" min="1" max="32" value="4" id="ram-slider"
+                   oninput="updateSlider('ram', this.value); updateEstimate()"/>
+            <span class="slider-val"><span id="ram-val2">4</span> GB</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Disk Size — <span id="disk-val">30</span> GB</label>
+          <div class="slider-row">
+            <input type="range" min="10" max="200" step="10" value="30" id="disk-slider"
+                   oninput="updateSlider('disk', this.value)"/>
+            <span class="slider-val"><span id="disk-val2">30</span> GB</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Operating System</label>
+          <select id="os-select">
+            <option value="linux">Ubuntu 20.04 LTS (Linux)</option>
+            <option value="linux">Amazon Linux 2</option>
+            <option value="windows">Windows Server 2022</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">3. Resource Tags</div>
+        <div class="tags-grid">
+          <div class="form-row">
+            <label>Environment</label>
+            <select id="tag-env">
+              <option>development</option>
+              <option>staging</option>
+              <option>production</option>
+              <option>testing</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Owner</label>
+            <input type="text" id="tag-owner" value="kshitija"/>
+          </div>
+          <div class="form-row">
+            <label>Project</label>
+            <input type="text" id="tag-project" value="multicloud-platform"/>
+          </div>
+          <div class="form-row">
+            <label>Team</label>
+            <input type="text" id="tag-team" value="intern"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button class="btn btn-preview" onclick="runAction(true)" id="btn-preview">
+          👁 Preview (No Charge)
+        </button>
+        <button class="btn btn-create" onclick="runAction(false)" id="btn-create">
+          ⚡ Create VM
+        </button>
+      </div>
+
+      <!-- Status and result -->
+      <div class="status-box status-info" id="status-box"></div>
+      <pre class="result-block" id="result-block"></pre>
+    </div>
+
+    <!-- RIGHT: Live Summary -->
+    <div>
+      <div class="card" style="position:sticky; top:80px;">
+        <div class="card-title">Live Cost Summary</div>
+
+        <div class="cost-highlight">
+          <div class="cost-main" id="monthly-cost">$29.95</div>
+          <div class="cost-sub" id="monthly-inr">≈ ₹2,516 / month</div>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Provider</span>
+          <span class="summary-value" id="s-provider">AWS</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Instance type</span>
+          <span class="summary-value" id="s-instance">t3.medium</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">vCPU</span>
+          <span class="summary-value" id="s-cpu">2</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">RAM</span>
+          <span class="summary-value" id="s-ram">4 GB</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Hourly cost</span>
+          <span class="summary-value" id="s-hourly">$0.0416</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Daily cost</span>
+          <span class="summary-value" id="s-daily">$1.00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Yearly cost</span>
+          <span class="summary-value" id="s-yearly">$364</span>
+        </div>
+
+        <!-- Compare section -->
+        <div style="margin-top:20px;">
+          <div class="card-title">All-Cloud Comparison</div>
+          <div id="compare-list" style="font-size:13px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--aws);">● AWS</span>
+              <span id="cmp-aws">$29.95/mo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--azure);">● Azure</span>
+              <span id="cmp-azure">$29.95/mo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--gcp);">● GCP</span>
+              <span id="cmp-gcp">$24.19/mo</span>
+            </div>
+            <div style="margin-top:6px; padding:8px; background:rgba(34,197,94,0.08);
+                        border:1px solid rgba(34,197,94,0.2); border-radius:6px;
+                        font-size:12px; color:var(--green);">
+              <span id="cheapest-label">💡 GCP saves $5.76/mo vs AWS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Savings tip -->
+        <div style="margin-top:20px; padding:12px; background:rgba(139,92,246,0.08);
+                    border:1px solid rgba(139,92,246,0.2); border-radius:8px; font-size:12px;
+                    color:#c4b5fd;">
+          💡 <strong>Auto-Shutdown tip:</strong> Apply the "Weekday 9-5" schedule to save
+          <strong id="shutdown-save">~$23/mo</strong> by turning this VM off on nights &amp; weekends.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let currentProvider = 'aws';
+
+// ── Pricing tables (frontend fallback — used when API is offline) ──
+const AWS_P   = { 't3.micro':0.0104,'t3.small':0.0208,'t3.medium':0.0416,'t3.large':0.0832,'t3.xlarge':0.1664,'t3.2xlarge':0.3328 };
+const AZURE_P = { 'Standard_B1s':0.0104,'Standard_B1ms':0.0207,'Standard_B2s':0.0416,'Standard_B2ms':0.0832,'Standard_B4ms':0.1664,'Standard_B8ms':0.3328 };
+const GCP_P   = { 'e2-micro':0.0084,'e2-small':0.0168,'e2-medium':0.0336,'e2-standard-2':0.0671,'e2-standard-4':0.1342,'e2-standard-8':0.2684 };
+const INR     = 84;
+
+function selectInstance(provider, cpu, ram) {
+  const maps = {
+    aws:   [['t3.micro',1,1],['t3.small',2,2],['t3.medium',2,4],['t3.large',2,8],['t3.xlarge',4,16],['t3.2xlarge',8,32]],
+    azure: [['Standard_B1s',1,1],['Standard_B1ms',1,2],['Standard_B2s',2,4],['Standard_B2ms',2,8],['Standard_B4ms',4,16],['Standard_B8ms',8,32]],
+    gcp:   [['e2-micro',1,1],['e2-small',2,2],['e2-medium',2,4],['e2-standard-2',2,8],['e2-standard-4',4,16],['e2-standard-8',8,32]],
+  };
+  const prices = { aws: AWS_P, azure: AZURE_P, gcp: GCP_P };
+  for (const [type, c, r] of maps[provider]) {
+    if (c >= cpu && r >= ram) return { type, hourly: prices[provider][type] };
+  }
+  return { type: maps[provider].at(-1)[0], hourly: Object.values(prices[provider]).at(-1) };
+}
+
+// ── API URL management ─────────────────────────────────────────────
+function getApiUrl() {
+  return localStorage.getItem('mc_api_url') || '';
+}
+function saveApiUrl() {
+  const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+  localStorage.setItem('mc_api_url', val);
+  showStatus('info', '✅ API URL saved: ' + val);
+  checkApiStatus();
+}
+async function checkApiStatus() {
+  const url = getApiUrl();
+  const dot = document.getElementById('api-dot');
+  const txt = document.getElementById('api-status-text');
+  if (!url) {
+    dot.className = 'api-dot offline';
+    txt.textContent = 'Not configured — enter your backend URL above';
+    return false;
+  }
+  dot.className = 'api-dot checking'; txt.textContent = 'Checking...';
+  try {
+    const r = await fetch(url + '/api/health', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      dot.className = 'api-dot online';
+      txt.textContent = 'Connected — ' + url;
+      return true;
+    }
+  } catch {}
+  dot.className = 'api-dot offline';
+  txt.textContent = 'Offline — is the backend running?';
+  return false;
+}
+
+// ── Provider selection ─────────────────────────────────────────────
+function selectProvider(p, el) {
+  currentProvider = p;
+  document.querySelectorAll('.provider-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  // update region options
+  const reg = document.getElementById('region');
+  const regions = {
+    aws:   ['ap-south-1|Asia Pacific — Mumbai','us-east-1|US East — N. Virginia','us-west-2|US West — Oregon','eu-west-1|EU — Ireland'],
+    azure: ['centralindia|Azure India Central','eastus|Azure US East','westeurope|Azure EU West','southeastasia|Azure SE Asia'],
+    gcp:   ['asia-south1|GCP Asia South (Mumbai)','us-central1|GCP US Central','europe-west1|GCP EU West','us-east1|GCP US East'],
+  };
+  reg.innerHTML = regions[p].map(r => {
+    const [val, label] = r.split('|');
+    return `<option value="${val}">${label}</option>`;
+  }).join('');
+  updateEstimate();
+}
+
+// ── Slider sync ────────────────────────────────────────────────────
+function updateSlider(id, val) {
+  document.getElementById(id+'-val').textContent  = val;
+  document.getElementById(id+'-val2').textContent = val;
+  document.getElementById('s-' + (id==='cpu'?'cpu':(id==='ram'?'ram':'disk'))).textContent =
+    id === 'ram' ? val + ' GB' : val;
+}
+
+// ── Live estimate (frontend) ───────────────────────────────────────
+function updateEstimate() {
+  const cpu = parseInt(document.getElementById('cpu-slider').value);
+  const ram = parseInt(document.getElementById('ram-slider').value);
+  const { type, hourly } = selectInstance(currentProvider, cpu, ram);
+  const monthly = hourly * 24 * 30;
+
+  document.getElementById('s-provider').textContent  = currentProvider.toUpperCase();
+  document.getElementById('s-instance').textContent  = type;
+  document.getElementById('s-cpu').textContent       = cpu;
+  document.getElementById('s-ram').textContent       = ram + ' GB';
+  document.getElementById('s-hourly').textContent    = '$' + hourly.toFixed(4);
+  document.getElementById('s-daily').textContent     = '$' + (hourly * 24).toFixed(2);
+  document.getElementById('monthly-cost').textContent= '$' + monthly.toFixed(2);
+  document.getElementById('s-yearly').textContent    = '$' + (hourly * 24 * 365).toFixed(0);
+  document.getElementById('monthly-inr').textContent = '≈ ₹' + Math.round(monthly * INR).toLocaleString('en-IN') + ' / month';
+
+  // compare
+  const { type: ta, hourly: ha } = selectInstance('aws',   cpu, ram);
+  const { type: tb, hourly: hb } = selectInstance('azure', cpu, ram);
+  const { type: tc, hourly: hc } = selectInstance('gcp',   cpu, ram);
+  document.getElementById('cmp-aws').textContent   = '$' + (ha*24*30).toFixed(2) + '/mo';
+  document.getElementById('cmp-azure').textContent = '$' + (hb*24*30).toFixed(2) + '/mo';
+  document.getElementById('cmp-gcp').textContent   = '$' + (hc*24*30).toFixed(2) + '/mo';
+
+  const mins   = Math.min(ha,hb,hc);
+  const labels = { aws: 'AWS', azure: 'Azure', gcp: 'GCP' };
+  const cheapP = ha===mins?'aws':hb===mins?'azure':'gcp';
+  const saving = (monthly - mins*24*30).toFixed(2);
+  document.getElementById('cheapest-label').textContent =
+    cheapP === currentProvider
+      ? '✅ You chose the cheapest option!'
+      : `💡 ${labels[cheapP]} saves $${saving}/mo vs ${currentProvider.toUpperCase()}`;
+
+  // shutdown savings (weekday 9-5 = 160hrs / 720hrs)
+  const savedMo = ((monthly) * (1 - 160/720)).toFixed(0);
+  document.getElementById('shutdown-save').textContent = '~$' + savedMo + '/mo';
+}
+
+// ── Main action ────────────────────────────────────────────────────
+async function runAction(dryRun) {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) {
+    showStatus('error', '❌ No backend URL set. Enter your Render.com URL in the banner above and click Save.');
+    return;
+  }
+  const name = document.getElementById('vm-name').value.trim();
+  if (!name) { showStatus('error', '❌ Please enter a VM name.'); return; }
+
+  if (!dryRun) {
+    const ok = confirm(`⚠️ This will create a REAL ${currentProvider.toUpperCase()} instance.\n\nThis may incur cloud charges.\n\nContinue?`);
+    if (!ok) return;
+  }
+
+  const cpu    = parseInt(document.getElementById('cpu-slider').value);
+  const ram    = parseInt(document.getElementById('ram-slider').value);
+  const disk   = parseInt(document.getElementById('disk-slider').value);
+  const region = document.getElementById('region').value;
+
+  const payload = {
+    name, provider: currentProvider, region,
+    cpu, ram_gb: ram, disk_gb: disk,
+    os: document.getElementById('os-select').value,
+    dry_run: dryRun,
+    tags: {
+      Environment: document.getElementById('tag-env').value,
+      Owner:       document.getElementById('tag-owner').value,
+      Project:     document.getElementById('tag-project').value,
+      Team:        document.getElementById('tag-team').value,
+    }
+  };
+
+  setBusy(true, dryRun);
+  showStatus('info', dryRun ? '🔍 Running preview...' : '⚙️ Creating VM — this may take 30-60 seconds...');
+
+  try {
+    const res  = await fetch(apiUrl + '/api/vms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const d = data.data;
+      if (dryRun) {
+        showStatus('success',
+          `✅ Preview successful — no resources created\n\n` +
+          `Instance type : ${d.instance_type}\n` +
+          `Estimated cost: $${d.hourly_cost}/hr  ($${d.monthly_cost}/mo)\n` +
+          `Status        : ${d.status}\n\n` +
+          `Remove dry_run to create this VM for real.`);
+      } else {
+        showStatus('success',
+          `🎉 VM Created Successfully!\n\n` +
+          `VM ID         : ${d.vm_id}\n` +
+          `Instance type : ${d.instance_type}\n` +
+          `Status        : ${d.status}\n` +
+          `Cost          : $${d.hourly_cost}/hr  ($${d.monthly_cost}/mo)\n\n` +
+          `Your VM is now running on ${currentProvider.toUpperCase()}. ` +
+          `Check your cloud console to connect.`);
+      }
+      showResult(data.data);
+    } else {
+      showStatus('error', '❌ Error: ' + data.error);
+    }
+  } catch (e) {
+    showStatus('error',
+      '❌ Could not reach backend API.\n\n' +
+      'Make sure your backend is deployed and the URL is correct.\n' +
+      'URL: ' + apiUrl);
+  }
+  setBusy(false, dryRun);
+}
+
+// ── UI helpers ─────────────────────────────────────────────────────
+function showStatus(type, msg) {
+  const box = document.getElementById('status-box');
+  box.className = 'status-box status-' + type;
+  box.textContent = msg;
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function showResult(data) {
+  const el = document.getElementById('result-block');
+  el.textContent = JSON.stringify(data, null, 2);
+  el.style.display = 'block';
+}
+function setBusy(busy, dryRun) {
+  const bp = document.getElementById('btn-preview');
+  const bc = document.getElementById('btn-create');
+  bp.disabled = busy;
+  bc.disabled = busy;
+  if (busy) {
+    if (dryRun) bp.innerHTML = '<span class="spinner"></span> Previewing...';
+    else        bc.innerHTML = '<span class="spinner"></span> Creating...';
+  } else {
+    bp.innerHTML = '👁 Preview (No Charge)';
+    bc.innerHTML = '⚡ Create VM';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = getApiUrl();
+  if (saved) document.getElementById('api-url-input').value = saved;
+  checkApiStatus();
+  updateEstimate();
+  setInterval(checkApiStatus, 30000);
+});
+</script>
+</body>
+</html>
