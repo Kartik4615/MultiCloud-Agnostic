@@ -1,7 +1,0 @@
-flask
-flask-cors
-boto3
-azure-mgmt-compute==30.3.0
-azure-mgmt-network==25.3.0
-azure-identity==1.15.0
-google-cloud-compute==1.14.1
